@@ -1,5 +1,5 @@
 // The pre-optimization v1 compiler is retained only as a benchmark control.
-import { MAGIC_CONFIG } from "../../runtime/src/memory.js";
+const MAGIC_CONFIG = 0x4346_435a;
 
 const encoder = new TextEncoder();
 

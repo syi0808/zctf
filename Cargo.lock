@@ -316,33 +316,40 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f0805222e57f7521d6a62e36fa9163bc891acd422f971defe97d64e70d0a4fe5"
 
 [[package]]
-name = "zctf-core"
+name = "zctf-bench-ffi"
 version = "0.1.0"
+dependencies = [
+ "zctf-bench-fixtures",
+]
 
 [[package]]
-name = "zctf-ffi"
+name = "zctf-bench-fixtures"
 version = "0.1.0"
 dependencies = [
  "zctf-core",
 ]
 
 [[package]]
-name = "zctf-napi"
+name = "zctf-bench-napi"
 version = "0.1.0"
 dependencies = [
  "napi",
  "napi-build",
  "napi-derive",
  "serde_json",
- "zctf-core",
+ "zctf-bench-fixtures",
 ]
 
 [[package]]
-name = "zctf-wasm"
+name = "zctf-bench-wasm"
 version = "0.1.0"
 dependencies = [
- "zctf-core",
+ "zctf-bench-fixtures",
 ]
+
+[[package]]
+name = "zctf-core"
+version = "0.1.0"
 
 [[package]]
 name = "zmij"

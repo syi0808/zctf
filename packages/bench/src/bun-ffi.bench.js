@@ -1,8 +1,9 @@
 import { dlopen, FFIType, ptr, toArrayBuffer } from "bun:ffi";
 import { mkdirSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { BenchReportView } from "../../runtime/src/bench-report.view.js";
+import { BenchReportView } from "../fixtures/bench-report.view.js";
 
+const outputArgument = process.argv.find((argument) => argument.startsWith("--output="));
 const extension = process.platform === "darwin" ? "dylib" : process.platform === "win32" ? "dll" : "so";
 const prefix = process.platform === "win32" ? "" : "lib";
 const library = resolve(import.meta.dirname, `../../../target/release/${prefix}zctf_ffi.${extension}`);
@@ -30,10 +31,13 @@ for (const count of [1_000, 10_000, 100_000]) {
   console.log(JSON.stringify(row));
   symbols.zctf_release(handle);
 }
-const outputDir = resolve(import.meta.dirname, "../../../benchmark-results");
+const output = outputArgument
+  ? resolve(process.cwd(), outputArgument.slice("--output=".length))
+  : resolve(import.meta.dirname, "../../../benchmark-results/bun-ffi.json");
+const outputDir = resolve(output, "..");
 mkdirSync(outputDir, { recursive: true });
 writeFileSync(
-  resolve(outputDir, "bun-ffi.json"),
+  output,
   `${JSON.stringify(
     { metadata: { timestamp: new Date().toISOString(), bun: Bun.version, platform: `${process.platform}-${process.arch}` }, results },
     null,

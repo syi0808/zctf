@@ -1,8 +1,23 @@
-import { ZctfDocument } from "./document.js";
+import { BinaryDocument } from "../../runtime/src/document.js";
+import { FixedListView } from "../../runtime/src/fixed-list.js";
 import { BENCH_REPORT, PACKAGE_INFO } from "./layout.generated.js";
 
 const ROOT_OFFSET = BENCH_REPORT.offset;
 const PACKAGE_SIZE = PACKAGE_INFO.size;
+const BENCH_REPORT_FORMAT = Object.freeze({
+  magic: 0x4654_435a,
+  versions: [1],
+  minimumSize: 64,
+  totalLengthOffset: 60,
+  strings: {
+    tableOffsetField: 32,
+    heapOffsetField: 36,
+    heapCursorField: 40,
+    heapCapacityField: 44,
+    countField: 52,
+    capacityField: 56,
+  },
+});
 
 export class PackageInfoView {
   constructor(doc, offset) {
@@ -48,43 +63,29 @@ export class PackageInfoView {
   }
 }
 
-export class FixedPackageListView {
+export class FixedPackageListView extends FixedListView {
   constructor(doc, offset) {
+    super(doc, offset, PACKAGE_SIZE, (document, itemOffset) => {
+      return new PackageInfoView(document, itemOffset);
+    });
     this.doc = doc;
-    this.offset = offset;
-    this.itemsOffset = doc.u32(offset + 12);
-  }
-
-  get length() {
-    return this.doc.u32(this.offset);
-  }
-
-  get capacity() {
-    return this.doc.u32(this.offset + 4);
-  }
-
-  get(index) {
-    if (index < 0 || index >= this.length) throw new RangeError("package index out of bounds");
-    return new PackageInfoView(this.doc, this.itemsOffset + index * PACKAGE_SIZE);
   }
 
   push({ name, version, size = 0, dependencyCount = 0 }) {
-    const length = this.length;
-    if (length >= this.capacity) throw new RangeError("package list capacity exceeded");
-    const offset = this.itemsOffset + length * PACKAGE_SIZE;
-    this.doc.setU32(offset, this.doc.allocString(name));
-    this.doc.setU32(offset + 4, this.doc.allocString(version));
-    this.doc.setU32(offset + 8, size);
-    this.doc.setU32(offset + 12, dependencyCount);
-    this.doc.setU32(this.offset, length + 1);
-    this.doc.setU32(ROOT_OFFSET, length + 1);
-    return new PackageInfoView(this.doc, offset);
+    const item = this.commitPush((offset) => {
+      this.doc.setU32(offset, this.doc.allocString(name));
+      this.doc.setU32(offset + 4, this.doc.allocString(version));
+      this.doc.setU32(offset + 8, size);
+      this.doc.setU32(offset + 12, dependencyCount);
+    });
+    this.doc.setU32(ROOT_OFFSET, this.length);
+    return item;
   }
 }
 
 export class BenchReportView {
   static from(bytes, options) {
-    return new BenchReportView(new ZctfDocument(bytes, options));
+    return new BenchReportView(new BinaryDocument(bytes, BENCH_REPORT_FORMAT, options));
   }
 
   constructor(doc) {

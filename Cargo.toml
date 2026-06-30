@@ -1,6 +1,7 @@
 [workspace]
 members = [
   "crates/zctf-core",
+  "crates/zctf-bench-fixtures",
   "crates/zctf-napi",
   "crates/zctf-ffi",
   "crates/zctf-wasm",
@@ -15,4 +16,3 @@ version = "0.1.0"
 [profile.release]
 lto = "thin"
 codegen-units = 1
-

@@ -1,45 +1,105 @@
-import { MAGIC_REPORT, MemoryReader } from "./memory.js";
+import { MemoryReader } from "./memory.js";
 
 const decoder = new TextDecoder();
 const encoder = new TextEncoder();
 
-export class ZctfDocument extends MemoryReader {
-  constructor(bytes, { cacheStrings = false } = {}) {
+export class BinaryDocument extends MemoryReader {
+  constructor(bytes, format, { cacheStrings = false } = {}) {
     super(bytes);
-    if (this.u32(0) !== MAGIC_REPORT) throw new TypeError("invalid zctf report magic");
-    this.stringTableOffset = this.u32(32);
-    this.stringHeapOffset = this.u32(36);
+    if (!format || !Number.isInteger(format.magic)) {
+      throw new TypeError("a format descriptor with a magic number is required");
+    }
+    if (this.bytes.byteLength < (format.minimumSize ?? 8)) {
+      throw new RangeError("document is shorter than the format minimum");
+    }
+    if (this.u32(0) !== format.magic) throw new TypeError("invalid document magic");
+    this.version = this.u32(4);
+    if (format.versions && !format.versions.includes(this.version)) {
+      throw new TypeError(`unsupported document version: ${this.version}`);
+    }
+    if (format.totalLengthOffset !== undefined) {
+      const total = this.u32(format.totalLengthOffset);
+      if (total < (format.minimumSize ?? 8) || total > this.bytes.byteLength) {
+        throw new RangeError("invalid document total length");
+      }
+      if (total !== this.bytes.byteLength) {
+        this.bytes = this.bytes.subarray(0, total);
+        this.view = new DataView(this.bytes.buffer, this.bytes.byteOffset, total);
+      }
+    }
     this.cache = cacheStrings ? new Map() : null;
+    this.strings = format.strings ? new MutableStringTable(this, format.strings) : null;
   }
 
   string(id) {
-    const cached = this.cache?.get(id);
-    if (cached !== undefined) return cached;
-    const entry = this.stringTableOffset + id * 8;
-    const offset = this.stringHeapOffset + this.u32(entry);
-    const length = this.u32(entry + 4);
-    const value = decoder.decode(this.bytes.subarray(offset, offset + length));
-    this.cache?.set(id, value);
-    return value;
+    if (!this.strings) throw new TypeError("format does not define a string table");
+    return this.strings.get(id);
   }
 
   allocString(value) {
-    const encoded = encoder.encode(value);
-    const id = this.u32(52);
-    const capacity = this.u32(56);
-    let cursor = this.u32(40);
-    const heapEnd = this.stringHeapOffset + this.u32(44);
-    if (id >= capacity) throw new RangeError("zctf string table capacity exceeded");
-    if (cursor + encoded.length > heapEnd) throw new RangeError("zctf string heap capacity exceeded");
-    this.bytes.set(encoded, cursor);
-    const entry = this.stringTableOffset + id * 8;
-    this.setU32(entry, cursor - this.stringHeapOffset);
-    this.setU32(entry + 4, encoded.length);
-    cursor += encoded.length;
-    this.setU32(40, cursor);
-    this.setU32(52, id + 1);
-    this.cache?.set(id, value);
-    return id;
+    if (!this.strings) throw new TypeError("format does not define a mutable string table");
+    return this.strings.allocate(value);
   }
 }
 
+export class MutableStringTable {
+  constructor(document, layout) {
+    this.document = document;
+    this.layout = layout;
+    this.tableOffset = document.u32(layout.tableOffsetField);
+    this.heapOffset = document.u32(layout.heapOffsetField);
+    this.validate();
+  }
+
+  validate() {
+    const count = this.document.u32(this.layout.countField);
+    const capacity = this.document.u32(this.layout.capacityField);
+    if (count > capacity) throw new RangeError("string count exceeds capacity");
+    const tableEnd = this.tableOffset + capacity * 8;
+    const heapEnd = this.heapOffset + this.document.u32(this.layout.heapCapacityField);
+    if (tableEnd > this.heapOffset || heapEnd > this.document.bytes.byteLength) {
+      throw new RangeError("invalid string table regions");
+    }
+  }
+
+  range(id) {
+    const count = this.document.u32(this.layout.countField);
+    if (!Number.isInteger(id) || id < 0 || id >= count) {
+      throw new RangeError("string id out of bounds");
+    }
+    const entry = this.tableOffset + id * 8;
+    const offset = this.heapOffset + this.document.u32(entry);
+    const length = this.document.u32(entry + 4);
+    this.document.slice(offset, length);
+    return [offset, length];
+  }
+
+  get(id) {
+    const cached = this.document.cache?.get(id);
+    if (cached !== undefined) return cached;
+    const [offset, length] = this.range(id);
+    const value = decoder.decode(this.document.slice(offset, length));
+    this.document.cache?.set(id, value);
+    return value;
+  }
+
+  allocate(value) {
+    if (typeof value !== "string") throw new TypeError("string value required");
+    const encoded = encoder.encode(value);
+    const id = this.document.u32(this.layout.countField);
+    const capacity = this.document.u32(this.layout.capacityField);
+    let cursor = this.document.u32(this.layout.heapCursorField);
+    const heapEnd = this.heapOffset + this.document.u32(this.layout.heapCapacityField);
+    if (id >= capacity) throw new RangeError("zctf string table capacity exceeded");
+    if (cursor + encoded.length > heapEnd) throw new RangeError("zctf string heap capacity exceeded");
+    this.document.bytes.set(encoded, cursor);
+    const entry = this.tableOffset + id * 8;
+    this.document.setU32(entry, cursor - this.heapOffset);
+    this.document.setU32(entry + 4, encoded.length);
+    cursor += encoded.length;
+    this.document.setU32(this.layout.heapCursorField, cursor);
+    this.document.setU32(this.layout.countField, id + 1);
+    this.document.cache?.set(id, value);
+    return id;
+  }
+}

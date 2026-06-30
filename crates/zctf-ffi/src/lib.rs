@@ -1,6 +1,6 @@
 use std::collections::HashMap;
 use std::sync::{Mutex, OnceLock};
-use zctf_core::{consume_bench_report, make_bench_report};
+use zctf_bench_fixtures::{consume_bench_report, make_bench_report};
 
 struct Allocation {
     bytes: Box<[u8]>,

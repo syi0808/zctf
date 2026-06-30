@@ -1,11 +1,10 @@
-import { MAGIC_CONFIG } from "../../runtime/src/memory.js";
 import {
-  CONFIG_ENUMS,
+  ENUMS,
   TRANSFORM_CONFIG,
-  writeTransformConfigRoot,
-} from "../../runtime/src/layout.generated.js";
+} from "./layout.generated.js";
 
 const encoder = new TextEncoder();
+const MAGIC_CONFIG = 0x4346_435a;
 const VERSION = 2;
 const HEADER_SIZE = 32;
 const ROOT_SIZE = 32;
@@ -226,9 +225,9 @@ export function compileConfigInto(writer, config) {
     presence |= PRESENCE.typescript;
     flags |= FLAGS.typescript;
   }
-  const jsxRuntime = enumId(config.jsxRuntime, CONFIG_ENUMS.jsxRuntime, "automatic");
+  const jsxRuntime = enumId(config.jsxRuntime, ENUMS.jsxRuntime, "automatic");
   if (jsxRuntime) presence |= PRESENCE.jsxRuntime;
-  const exportType = enumId(config.exportType, CONFIG_ENUMS.exportType, "default");
+  const exportType = enumId(config.exportType, ENUMS.exportType, "default");
   if (exportType) presence |= PRESENCE.exportType;
   if (config.svgo === true) {
     presence |= PRESENCE.svgo;
@@ -243,16 +242,15 @@ export function compileConfigInto(writer, config) {
   if (floatPrecision !== 0) presence |= PRESENCE.floatPrecision;
   if (nestedPlugins.length) presence |= PRESENCE.svgoPlugins;
 
-  writeTransformConfigRoot(
-    view,
-    presence,
-    flags,
-    floatPrecision,
-    pluginsOffset,
-    nestedOffset,
-    jsxRuntime,
-    exportType,
-  );
+  const root = TRANSFORM_CONFIG.offset;
+  const fields = TRANSFORM_CONFIG.fields;
+  u32(root + fields.presence, presence);
+  u32(root + fields.flags, flags);
+  view.setFloat64(root + fields.floatPrecision, floatPrecision, true);
+  u32(root + fields.plugins, pluginsOffset);
+  u32(root + fields.svgoPlugins, nestedOffset);
+  view.setUint8(root + fields.jsxRuntime, jsxRuntime);
+  view.setUint8(root + fields.exportType, exportType);
 
   if (pluginsOffset) {
     writeListHeader(u32, pluginsOffset, plugins.length, 4);
@@ -327,52 +325,4 @@ export function withCompiledConfig(config, callback) {
   } finally {
     syncWriterInUse = false;
   }
-}
-
-export function createConfig(size = "medium") {
-  const counts = {
-    small: 0,
-    medium: 10,
-    large: 100,
-    stringHeavy: 100,
-    pluginHeavy: 100,
-    enumHeavy: 0,
-    unicodeHeavy: 100,
-    defaultHeavy: 0,
-  };
-  const count = counts[size];
-  if (count === undefined) throw new TypeError(`unknown config size: ${size}`);
-  const suffix =
-    size === "stringHeavy"
-      ? "-a-very-long-plugin-name-for-string-heavy-input"
-      : size === "unicodeHeavy"
-        ? "-플러그인-설정"
-        : "";
-  const known = ["svgo", "jsx", "removeViewBox", "convertColors", "currentColor"];
-  const config = {
-    typescript: size !== "defaultHeavy",
-    jsxRuntime: size === "enumHeavy" ? "classic" : "automatic",
-    exportType: size === "enumHeavy" ? "named" : "default",
-    svgo: size !== "defaultHeavy",
-    plugins: count
-      ? Array.from({ length: count }, (_, index) =>
-          size === "pluginHeavy" ? known[index % known.length] : `plugin-${index}${suffix}`,
-        )
-      : undefined,
-    svgoConfig: count
-      ? {
-          multipass: true,
-          floatPrecision: 3,
-          plugins: Array.from({ length: count }, (_, index) => ({
-            name:
-              size === "pluginHeavy"
-                ? known[index % known.length]
-                : `svgo-plugin-${index}${suffix}`,
-            active: index % 3 !== 0,
-            currentColor: index % 2 === 0,
-          })),
-        }
-      : undefined,
-  };
-  return config;
 }

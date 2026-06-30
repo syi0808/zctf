@@ -3,7 +3,7 @@ name = "zctf-core"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+description = "Validated zero-copy binary document primitives for Rust and JavaScript interop"
 
 [lib]
 crate-type = ["rlib"]
-

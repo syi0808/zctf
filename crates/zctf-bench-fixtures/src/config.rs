@@ -1,6 +1,7 @@
-use crate::layout::{MAGIC_CONFIG, get_f64, get_u32, get_u64};
 use std::hint::black_box;
+use zctf_core::{read_f64, read_u32, read_u64};
 
+const MAGIC_CONFIG: u32 = 0x4346_435a;
 const VERSION_SPECIALIZED: u32 = 2;
 const ROOT_SIZE: usize = 32;
 const LIST_HEADER_SIZE: usize = 16;
@@ -16,10 +17,10 @@ pub struct ConfigSummary {
 }
 
 pub fn consume_compiled_config(bytes: &[u8]) -> Result<ConfigSummary, &'static str> {
-    if bytes.len() < 8 || get_u32(bytes, 0) != MAGIC_CONFIG {
+    if bytes.len() < 8 || read_u32(bytes, 0).ok() != Some(MAGIC_CONFIG) {
         return Err("invalid zctf config");
     }
-    match get_u32(bytes, 4) {
+    match read_u32(bytes, 4).map_err(|_| "invalid zctf config")? {
         1 => consume_v1(bytes),
         VERSION_SPECIALIZED => ConfigView::parse(bytes).map(|view| view.summary()),
         _ => Err("unsupported zctf config version"),
@@ -62,17 +63,17 @@ struct List {
 impl<'a> ConfigView<'a> {
     fn parse(bytes: &'a [u8]) -> Result<Self, &'static str> {
         if bytes.len() < 64
-            || get_u32(bytes, 0) != MAGIC_CONFIG
-            || get_u32(bytes, 4) != VERSION_SPECIALIZED
+            || read_u32(bytes, 0).ok() != Some(MAGIC_CONFIG)
+            || read_u32(bytes, 4).ok() != Some(VERSION_SPECIALIZED)
         {
             return Err("invalid specialized config");
         }
-        let total = get_u32(bytes, 20) as usize;
+        let total = read_u32(bytes, 20).map_err(|_| "truncated config")? as usize;
         if total < 64 || total > bytes.len() {
             return Err("truncated config");
         }
         let bytes = &bytes[..total];
-        let root = get_u32(bytes, 8) as usize;
+        let root = read_u32(bytes, 8).map_err(|_| "truncated config root")? as usize;
         if root
             .checked_add(ROOT_SIZE)
             .is_none_or(|end| end > bytes.len())
@@ -80,9 +81,9 @@ impl<'a> ConfigView<'a> {
             return Err("truncated config root");
         }
 
-        let table = get_u32(bytes, 12) as usize;
-        let heap = get_u32(bytes, 16) as usize;
-        let string_count = get_u32(bytes, 24) as usize;
+        let table = read_u32(bytes, 12).map_err(|_| "invalid string regions")? as usize;
+        let heap = read_u32(bytes, 16).map_err(|_| "invalid string regions")? as usize;
+        let string_count = read_u32(bytes, 24).map_err(|_| "invalid string regions")? as usize;
         let table_end = table
             .checked_add(string_count.saturating_mul(STRING_ENTRY_SIZE))
             .ok_or("invalid string table")?;
@@ -90,12 +91,20 @@ impl<'a> ConfigView<'a> {
             return Err("invalid string regions");
         }
 
-        let plugins = validate_list(bytes, get_u32(bytes, root + 16) as usize, 4)?;
-        let svgo_plugins = validate_list(bytes, get_u32(bytes, root + 20) as usize, PLUGIN_SIZE)?;
+        let plugins = validate_list(
+            bytes,
+            read_u32(bytes, root + 16).map_err(|_| "truncated config root")? as usize,
+            4,
+        )?;
+        let svgo_plugins = validate_list(
+            bytes,
+            read_u32(bytes, root + 20).map_err(|_| "truncated config root")? as usize,
+            PLUGIN_SIZE,
+        )?;
         for index in 0..plugins.len {
             validate_name(
                 bytes,
-                get_u32(bytes, plugins.items + index * 4),
+                read_u32(bytes, plugins.items + index * 4).map_err(|_| "invalid list")?,
                 table,
                 heap,
                 string_count,
@@ -104,7 +113,8 @@ impl<'a> ConfigView<'a> {
         for index in 0..svgo_plugins.len {
             validate_name(
                 bytes,
-                get_u32(bytes, svgo_plugins.items + index * PLUGIN_SIZE),
+                read_u32(bytes, svgo_plugins.items + index * PLUGIN_SIZE)
+                    .map_err(|_| "invalid list")?,
                 table,
                 heap,
                 string_count,
@@ -251,9 +261,9 @@ fn validate_list(bytes: &[u8], offset: usize, stride: usize) -> Result<List, &'s
     {
         return Err("truncated list");
     }
-    let len = get_u32(bytes, offset) as usize;
-    let encoded_stride = get_u32(bytes, offset + 8) as usize;
-    let items = get_u32(bytes, offset + 12) as usize;
+    let len = read_u32(bytes, offset).map_err(|_| "truncated list")? as usize;
+    let encoded_stride = read_u32(bytes, offset + 8).map_err(|_| "truncated list")? as usize;
+    let items = read_u32(bytes, offset + 12).map_err(|_| "truncated list")? as usize;
     if encoded_stride != stride
         || items
             .checked_add(len.saturating_mul(stride))
@@ -284,10 +294,10 @@ fn validate_name(
     }
     let entry = table + id * STRING_ENTRY_SIZE;
     let start = heap
-        .checked_add(get_u32(bytes, entry) as usize)
+        .checked_add(read_u32(bytes, entry).map_err(|_| "invalid string")? as usize)
         .ok_or("invalid string")?;
     let end = start
-        .checked_add(get_u32(bytes, entry + 4) as usize)
+        .checked_add(read_u32(bytes, entry + 4).map_err(|_| "invalid string")? as usize)
         .ok_or("invalid string")?;
     if end > bytes.len() {
         return Err("truncated string");
@@ -299,13 +309,13 @@ fn consume_v1(bytes: &[u8]) -> Result<ConfigSummary, &'static str> {
     if bytes.len() < 56 {
         return Err("invalid legacy config");
     }
-    let root = get_u32(bytes, 8) as usize;
+    let root = read_u32(bytes, 8).map_err(|_| "truncated config root")? as usize;
     if root + 24 > bytes.len() {
         return Err("truncated config root");
     }
-    let presence = get_u64(bytes, root);
-    let plugins_offset = get_u32(bytes, root + 12) as usize;
-    let svgo_offset = get_u32(bytes, root + 16) as usize;
+    let presence = read_u64(bytes, root).map_err(|_| "truncated config root")?;
+    let plugins_offset = read_u32(bytes, root + 12).map_err(|_| "truncated config root")? as usize;
+    let svgo_offset = read_u32(bytes, root + 16).map_err(|_| "truncated config root")? as usize;
     let mut checksum = presence
         .wrapping_add(bytes[root + 8] as u64)
         .wrapping_add(bytes[root + 9] as u64)
@@ -320,18 +330,25 @@ fn consume_v1(bytes: &[u8]) -> Result<ConfigSummary, &'static str> {
             return Err("truncated svgo config");
         }
         checksum = checksum
-            .wrapping_add(get_u64(bytes, svgo_offset))
+            .wrapping_add(read_u64(bytes, svgo_offset).map_err(|_| "truncated svgo config")?)
             .wrapping_add(bytes[svgo_offset + 8] as u64)
-            .wrapping_add(get_f64(bytes, svgo_offset + 16).to_bits());
-        let nested = get_u32(bytes, svgo_offset + 12) as usize;
+            .wrapping_add(
+                read_f64(bytes, svgo_offset + 16)
+                    .map_err(|_| "truncated svgo config")?
+                    .to_bits(),
+            );
+        let nested =
+            read_u32(bytes, svgo_offset + 12).map_err(|_| "truncated svgo config")? as usize;
         if nested != 0 {
             let list = validate_list(bytes, nested, 16)?;
             plugin_count += list.len as u32;
             for index in 0..list.len {
                 let item = list.items + index * 16;
                 checksum = checksum
-                    .wrapping_add(get_u64(bytes, item))
-                    .wrapping_add(get_u32(bytes, item + 8) as u64)
+                    .wrapping_add(read_u64(bytes, item).map_err(|_| "truncated svgo plugin")?)
+                    .wrapping_add(
+                        read_u32(bytes, item + 8).map_err(|_| "truncated svgo plugin")? as u64,
+                    )
                     .wrapping_add(bytes[item + 12] as u64)
                     .wrapping_add(bytes[item + 13] as u64);
             }
@@ -350,7 +367,9 @@ fn consume_v1_string_list(
 ) -> Result<u32, &'static str> {
     let list = validate_list(bytes, offset, 4)?;
     for index in 0..list.len {
-        *checksum = checksum.wrapping_add(get_u32(bytes, list.items + index * 4) as u64);
+        *checksum = checksum.wrapping_add(
+            read_u32(bytes, list.items + index * 4).map_err(|_| "truncated string list")? as u64,
+        );
     }
     Ok(list.len as u32)
 }

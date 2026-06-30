@@ -1,17 +1,23 @@
-# 구현 범위
+# 라이브러리 구조
 
 ## 구성
 
-- `zctf-core`: 공통 report encoder, report/config offset reader
+- `zctf-core`: schema-independent validated document/list/string-table와 endian I/O
+- `zctf-bench-fixtures`: 기존 report encoder와 config reader fixture
 - `zctf-napi`: Buffer/object/JSON baseline, ConfigHandle
 - `zctf-ffi`: Bun용 `ptr + len + handle` ABI
 - `zctf-wasm`: WASM linear-memory `ptr + len + handle` ABI
-- `packages/runtime`: DataView 기반 readonly/mutable lazy view
+- `packages/runtime`: format descriptor 기반 DataView readonly/mutable lazy runtime
 - `packages/config`: plain object → binary config compiler
-- `packages/bench`: 비교군과 transport별 실행 하네스
+- `packages/bench`: Package report view, config sample, 비교군과 transport별 실행 하네스
 
-N-API, Bun FFI, WASM 모두 `zctf-core`가 생성한 같은 bytes와
+N-API, Bun FFI, WASM 모두 benchmark fixture가 생성한 같은 bytes와
 `BenchReportView`를 사용한다. backend별 차이는 bytes를 가져오는 adapter에만 있다.
+
+제품 library에는 benchmark schema를 넣지 않는다. Rust transport crate는 명시적으로
+`zctf-bench-fixtures`에 의존하며, JS benchmark view도 `packages/bench/fixtures`에
+있다. schema generator는 output별 record/enum 목록만 받아 artifact를 만들고 특정
+TransformConfig writer를 생성하는 분기를 갖지 않는다.
 
 ## 구현된 동작
 

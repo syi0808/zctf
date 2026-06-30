@@ -1,0 +1,8 @@
+{
+  "name": "@zctf/transform-config",
+  "version": "0.1.0",
+  "type": "module",
+  "exports": "./src/index.js",
+  "files": ["src"],
+  "license": "MIT"
+}

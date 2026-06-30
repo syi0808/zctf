@@ -1,9 +1,3 @@
-export const MAGIC_REPORT = 0x4654435a;
-export const MAGIC_CONFIG = 0x4346435a;
-export const HEADER_SIZE = 64;
-export const ROOT_OFFSET = 64;
-export const PACKAGE_SIZE = 16;
-
 export class MemoryReader {
   constructor(bytes) {
     this.bytes = bytes instanceof Uint8Array ? bytes : new Uint8Array(bytes);
@@ -26,11 +20,28 @@ export class MemoryReader {
     return this.view.getFloat64(offset, true);
   }
 
+  slice(offset, length) {
+    if (!Number.isSafeInteger(offset) || !Number.isSafeInteger(length) || offset < 0 || length < 0) {
+      throw new RangeError("offset and length must be non-negative safe integers");
+    }
+    const end = offset + length;
+    if (end > this.bytes.byteLength) throw new RangeError("memory range out of bounds");
+    return this.bytes.subarray(offset, end);
+  }
+
   setU32(offset, value) {
     this.view.setUint32(offset, value, true);
   }
 
   setU8(offset, value) {
     this.view.setUint8(offset, value);
+  }
+
+  setU64(offset, value) {
+    this.view.setBigUint64(offset, BigInt(value), true);
+  }
+
+  setF64(offset, value) {
+    this.view.setFloat64(offset, value, true);
   }
 }

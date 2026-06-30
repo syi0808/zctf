@@ -1,6 +1,6 @@
 use napi::bindgen_prelude::*;
 use napi_derive::napi;
-use zctf_core::{
+use zctf_bench_fixtures::{
     consume_bench_report as consume_report, consume_compiled_config,
     consume_compiled_config_repeated, make_bench_report,
 };

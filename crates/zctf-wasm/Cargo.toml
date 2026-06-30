@@ -1,12 +1,13 @@
 [package]
-name = "zctf-wasm"
+name = "zctf-bench-wasm"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+publish = false
 
 [lib]
+name = "zctf_wasm"
 crate-type = ["cdylib"]
 
 [dependencies]
-zctf-core = { path = "../zctf-core" }
-
+zctf-bench-fixtures = { path = "../zctf-bench-fixtures" }

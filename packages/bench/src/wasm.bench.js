@@ -1,8 +1,9 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { resolve } from "node:path";
 import { performance } from "node:perf_hooks";
-import { BenchReportView } from "../../runtime/src/bench-report.view.js";
+import { BenchReportView } from "../fixtures/bench-report.view.js";
 
+const outputArgument = process.argv.find((argument) => argument.startsWith("--output="));
 const path = resolve(
   import.meta.dirname,
   "../../../target/wasm32-unknown-unknown/release/zctf_wasm.wasm",
@@ -26,10 +27,13 @@ for (const count of [1_000, 10_000, 100_000]) {
   console.log(JSON.stringify(row));
   api.zctf_release(handle);
 }
-const outputDir = resolve(import.meta.dirname, "../../../benchmark-results");
+const output = outputArgument
+  ? resolve(process.cwd(), outputArgument.slice("--output=".length))
+  : resolve(import.meta.dirname, "../../../benchmark-results/wasm.json");
+const outputDir = resolve(output, "..");
 await mkdir(outputDir, { recursive: true });
 await writeFile(
-  resolve(outputDir, "wasm.json"),
+  output,
   `${JSON.stringify(
     { metadata: { timestamp: new Date().toISOString(), node: process.version, platform: `${process.platform}-${process.arch}` }, results },
     null,

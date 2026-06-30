@@ -1,6 +1,6 @@
 use std::cell::RefCell;
 use std::collections::HashMap;
-use zctf_core::{consume_bench_report, make_bench_report};
+use zctf_bench_fixtures::{consume_bench_report, make_bench_report};
 
 thread_local! {
     static ALLOCATIONS: RefCell<HashMap<u32, Box<[u8]>>> = RefCell::new(HashMap::new());

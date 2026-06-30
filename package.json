@@ -2,19 +2,24 @@
   "name": "zctf-poc",
   "private": true,
   "type": "module",
+  "workspaces": [
+    "packages/runtime",
+    "packages/config"
+  ],
   "scripts": {
-    "generate": "node scripts/generate.js",
+    "generate": "node scripts/generate.js schemas/zctf.schema.json packages/bench/fixtures/bench-report.schema.json",
     "build:napi": "napi build --platform --release --manifest-path crates/zctf-napi/Cargo.toml --output-dir native",
-    "build:ffi": "cargo build --release -p zctf-ffi",
-    "build:wasm": "cargo build --release -p zctf-wasm --target wasm32-unknown-unknown",
+    "build:ffi": "cargo build --release -p zctf-bench-ffi",
+    "build:wasm": "cargo build --release -p zctf-bench-wasm --target wasm32-unknown-unknown",
     "build": "npm run build:napi && npm run build:ffi && npm run build:wasm",
-    "test": "cargo test --workspace && node --test packages/runtime/test/*.test.js",
+    "test": "cargo test --workspace && node --test packages/*/test/*.test.js",
     "bench": "node --expose-gc packages/bench/src/napi.bench.js",
-    "bench:quick": "node --expose-gc packages/bench/src/napi.bench.js --quick",
+    "bench:quick": "node --expose-gc packages/bench/src/napi.bench.js --quick --output=/tmp/zctf-napi-quick.json",
     "bench:bun": "bun packages/bench/src/bun-ffi.bench.js",
     "bench:wasm": "node packages/bench/src/wasm.bench.js"
   },
   "devDependencies": {
     "@napi-rs/cli": "^3.0.0"
-  }
+  },
+  "packageManager": "pnpm@11.5.2"
 }

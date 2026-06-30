@@ -1,38 +1,81 @@
-pub const MAGIC_REPORT: u32 = 0x4654_435a;
-pub const MAGIC_CONFIG: u32 = 0x4346_435a;
-pub const VERSION: u32 = 1;
-pub const HEADER_SIZE: usize = 64;
-pub const ROOT_OFFSET: usize = HEADER_SIZE;
-pub const REPORT_ROOT_SIZE: usize = 32;
-pub const LIST_HEADER_SIZE: usize = 16;
-pub const PACKAGE_SIZE: usize = 16;
+use crate::{Error, Result};
 
 #[inline]
-pub fn get_u32(bytes: &[u8], offset: usize) -> u32 {
-    u32::from_le_bytes(bytes[offset..offset + 4].try_into().unwrap())
+pub fn read_u16(bytes: &[u8], offset: usize) -> Result<u16> {
+    Ok(u16::from_le_bytes(
+        bytes
+            .get(offset..offset.checked_add(2).ok_or(Error::Overflow)?)
+            .ok_or(Error::OutOfBounds { offset, size: 2 })?
+            .try_into()
+            .unwrap(),
+    ))
 }
 
 #[inline]
-pub fn get_u64(bytes: &[u8], offset: usize) -> u64 {
-    u64::from_le_bytes(bytes[offset..offset + 8].try_into().unwrap())
+pub fn read_u32(bytes: &[u8], offset: usize) -> Result<u32> {
+    Ok(u32::from_le_bytes(
+        bytes
+            .get(offset..offset.checked_add(4).ok_or(Error::Overflow)?)
+            .ok_or(Error::OutOfBounds { offset, size: 4 })?
+            .try_into()
+            .unwrap(),
+    ))
 }
 
 #[inline]
-pub fn get_f64(bytes: &[u8], offset: usize) -> f64 {
-    f64::from_le_bytes(bytes[offset..offset + 8].try_into().unwrap())
+pub fn read_u64(bytes: &[u8], offset: usize) -> Result<u64> {
+    Ok(u64::from_le_bytes(
+        bytes
+            .get(offset..offset.checked_add(8).ok_or(Error::Overflow)?)
+            .ok_or(Error::OutOfBounds { offset, size: 8 })?
+            .try_into()
+            .unwrap(),
+    ))
 }
 
 #[inline]
-pub fn put_u32(bytes: &mut [u8], offset: usize, value: u32) {
-    bytes[offset..offset + 4].copy_from_slice(&value.to_le_bytes());
+pub fn read_f64(bytes: &[u8], offset: usize) -> Result<f64> {
+    Ok(f64::from_le_bytes(
+        bytes
+            .get(offset..offset.checked_add(8).ok_or(Error::Overflow)?)
+            .ok_or(Error::OutOfBounds { offset, size: 8 })?
+            .try_into()
+            .unwrap(),
+    ))
 }
 
 #[inline]
-pub fn put_u64(bytes: &mut [u8], offset: usize, value: u64) {
-    bytes[offset..offset + 8].copy_from_slice(&value.to_le_bytes());
+pub fn write_u16(bytes: &mut [u8], offset: usize, value: u16) -> Result<()> {
+    bytes
+        .get_mut(offset..offset.checked_add(2).ok_or(Error::Overflow)?)
+        .ok_or(Error::OutOfBounds { offset, size: 2 })?
+        .copy_from_slice(&value.to_le_bytes());
+    Ok(())
 }
 
 #[inline]
-pub fn put_f64(bytes: &mut [u8], offset: usize, value: f64) {
-    bytes[offset..offset + 8].copy_from_slice(&value.to_le_bytes());
+pub fn write_u32(bytes: &mut [u8], offset: usize, value: u32) -> Result<()> {
+    bytes
+        .get_mut(offset..offset.checked_add(4).ok_or(Error::Overflow)?)
+        .ok_or(Error::OutOfBounds { offset, size: 4 })?
+        .copy_from_slice(&value.to_le_bytes());
+    Ok(())
+}
+
+#[inline]
+pub fn write_u64(bytes: &mut [u8], offset: usize, value: u64) -> Result<()> {
+    bytes
+        .get_mut(offset..offset.checked_add(8).ok_or(Error::Overflow)?)
+        .ok_or(Error::OutOfBounds { offset, size: 8 })?
+        .copy_from_slice(&value.to_le_bytes());
+    Ok(())
+}
+
+#[inline]
+pub fn write_f64(bytes: &mut [u8], offset: usize, value: f64) -> Result<()> {
+    bytes
+        .get_mut(offset..offset.checked_add(8).ok_or(Error::Overflow)?)
+        .ok_or(Error::OutOfBounds { offset, size: 8 })?
+        .copy_from_slice(&value.to_le_bytes());
+    Ok(())
 }

@@ -2,17 +2,18 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { performance } from "node:perf_hooks";
 import { resolve } from "node:path";
 import native from "./native.js";
-import { BenchReportView } from "../../runtime/src/bench-report.view.js";
+import { BenchReportView } from "../fixtures/bench-report.view.js";
 import {
   ConfigWriter,
   compileConfig,
   compileConfigInto,
-  createConfig,
   withCompiledConfig,
 } from "../../config/src/transform-config.compiler.js";
-import { compileConfigBaseline } from "../../config/src/transform-config.baseline.js";
+import { createConfigFixture } from "../fixtures/config.js";
+import { compileConfigBaseline } from "../fixtures/transform-config.baseline.js";
 
 const quick = process.argv.includes("--quick");
+const outputArgument = process.argv.find((argument) => argument.startsWith("--output="));
 const sizes = quick ? [1_000, 10_000] : [1_000, 10_000, 100_000, 1_000_000];
 const result = {
   metadata: {
@@ -127,7 +128,7 @@ for (const shape of [
   "unicodeHeavy",
   "defaultHeavy",
 ]) {
-  const config = createConfig(shape);
+  const config = createConfigFixture(shape);
   const compiled = compileConfig(config);
   const baselineCompiled = compileConfigBaseline(config);
   const json = JSON.stringify(config);
@@ -311,8 +312,10 @@ for (const count of quick ? [1_000, 10_000] : [10_000, 100_000]) {
 }
 
 result.metadata.sink = sink;
-const outputDir = resolve(import.meta.dirname, "../../../benchmark-results");
+const output = outputArgument
+  ? resolve(process.cwd(), outputArgument.slice("--output=".length))
+  : resolve(import.meta.dirname, "../../../benchmark-results/napi.json");
+const outputDir = resolve(output, "..");
 mkdirSync(outputDir, { recursive: true });
-const output = resolve(outputDir, "napi.json");
 writeFileSync(output, `${JSON.stringify(result, null, 2)}\n`);
 console.log(`Results: ${output}`);

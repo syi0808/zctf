@@ -1,0 +1,31 @@
+{
+  "outputs": [
+    {
+      "path": "packages/bench/fixtures/layout.generated.js",
+      "records": ["BenchReport", "PackageInfo"],
+      "enums": []
+    }
+  ],
+  "records": {
+    "BenchReport": {
+      "offset": 64,
+      "size": 32,
+      "fields": {
+        "packageCount": { "type": "u32", "offset": 0 },
+        "totalSize": { "type": "u64", "offset": 8 },
+        "durationMs": { "type": "f64", "offset": 16 },
+        "packages": { "type": "FixedList<PackageInfo>", "offset": 24 }
+      }
+    },
+    "PackageInfo": {
+      "size": 16,
+      "fields": {
+        "name": { "type": "StringRef", "offset": 0 },
+        "version": { "type": "StringRef", "offset": 4 },
+        "size": { "type": "u32", "offset": 8 },
+        "dependencyCount": { "type": "u32", "offset": 12 }
+      }
+    }
+  },
+  "enums": {}
+}
