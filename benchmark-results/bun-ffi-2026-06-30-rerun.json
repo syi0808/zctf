@@ -1,0 +1,30 @@
+{
+  "metadata": {
+    "timestamp": "2026-06-30T14:14:05.148Z",
+    "bun": "1.3.11",
+    "platform": "darwin-arm64"
+  },
+  "results": [
+    {
+      "count": 1000,
+      "elapsedMs": 1.55,
+      "length": 112176,
+      "first": "package-0",
+      "checksum": "8506904"
+    },
+    {
+      "count": 10000,
+      "elapsedMs": 1.006,
+      "length": 1120176,
+      "first": "package-0",
+      "checksum": "850069872"
+    },
+    {
+      "count": 100000,
+      "elapsedMs": 12.069,
+      "length": 11200176,
+      "first": "package-0",
+      "checksum": "85000700000"
+    }
+  ]
+}
