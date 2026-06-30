@@ -10,6 +10,11 @@ import {
 } from "../../config/src/transform-config.compiler.js";
 import { createConfigFixture } from "../../bench/fixtures/config.js";
 import { BenchReportView } from "../../bench/fixtures/bench-report.view.js";
+import {
+  DirectStringRefReportView,
+  SidecarReportView,
+  SoAReportView,
+} from "../../bench/fixtures/report-layout-variants.js";
 
 test("report view reads, mutates, and materializes native bytes", () => {
   const bytes = native.makeReportBuffer(10);
@@ -25,6 +30,47 @@ test("report view reads, mutates, and materializes native bytes", () => {
   assert.equal(report.packages.get(10).name, "new-package");
   assert.equal(report.toObject().packages.length, 11);
   assert.ok(native.consumeReportBuffer(bytes) > 0);
+});
+
+test("bulk traversal APIs match lazy traversal and update cached length", () => {
+  const report = BenchReportView.from(native.makeReportBufferMutable(20));
+  let rawSizes = 0;
+  report.packages.forEachRaw((offset, _index, doc) => {
+    rawSizes += doc.view.getUint32(offset + 8, true);
+  });
+  const cursor = report.packages.cursor();
+  let cursorSizes = 0;
+  for (let i = 0; i < report.packages.length; i++) cursorSizes += cursor.moveTo(i).size;
+  assert.equal(report.packages.sumSizes(), rawSizes);
+  assert.equal(report.packages.sumSizes(), cursorSizes);
+  assert.equal(report.packages.sumDependencyCounts(), 190);
+  assert.equal(report.packages.sumNameByteLengths(), 190);
+  assert.deepEqual(report.packages.materializeNames().slice(0, 2), ["package-0", "package-1"]);
+  assert.equal(report.packages.countNamesWithPrefix("package-1"), 11);
+  assert.deepEqual(report.toObject(), report.toObjectLegacy());
+  report.packages.push({ name: "last", version: "1.0.0" });
+  assert.equal(report.packages.length, 21);
+});
+
+test("compact and experimental report layouts preserve traversal results", () => {
+  const count = 100;
+  const mutable = native.makeReportBufferMutable(count);
+  const compact = native.makeReportBufferCompact(count);
+  assert.ok(compact.byteLength < mutable.byteLength);
+  const aos = BenchReportView.from(compact);
+  const direct = DirectStringRefReportView.from(
+    native.makeReportBufferDirectStringRef(count),
+  );
+  const soa = SoAReportView.from(native.makeReportBufferSoa(count));
+  const sidecar = SidecarReportView.from(native.makeReportBufferSidecar(count));
+  const expectedSizes = aos.packages.sumSizes();
+  const expectedNameBytes = aos.packages.sumNameByteLengths();
+  assert.equal(direct.sumSizes(), expectedSizes);
+  assert.equal(soa.sumSizes(), expectedSizes);
+  assert.equal(sidecar.sumSizes(), expectedSizes);
+  assert.equal(direct.sumNameByteLengths(), expectedNameBytes);
+  assert.equal(soa.sumNameByteLengths(), expectedNameBytes);
+  assert.deepEqual(direct.materializeNames(), aos.packages.materializeNames());
 });
 
 test("compiled config is consumed and cached by native code", () => {

@@ -1,5 +1,10 @@
 # Benchmark 결과
 
+Rust → JS full traversal 개선 후 최신 측정과 M1~M6 적용 내역은
+[`full-traversal-개선-결과-2026-06-30.md`](full-traversal-개선-결과-2026-06-30.md)에
+정리했다. 아래 Rust → JS 절은 비교를 위한 개선 전 baseline이며, 이후 절은 기존
+config/mutable/transport 측정 기록이다.
+
 측정일: 2026-06-30 18:20 KST
 
 환경: Apple arm64, Node v24.11.0, Bun 1.3.11, Rust 1.93.1
@@ -7,12 +12,13 @@
 단위: ms, warm-up 후 median. 실행 중 명시적으로 GC를 요청했으므로 절대값보다
 동일 행의 상대 비교를 우선한다.
 
-원시 데이터: `benchmark-results/napi.json`, `bun-ffi.json`, `wasm.json`.
+최신 원시 데이터: `benchmark-results/napi.json`. 기존 backend 측정은
+`bun-ffi.json`, `wasm.json`에 있다.
 
 실행 시간이 증가한 경로만 분리한 목록은
 [`실행시간-회귀-2026-06-30.md`](실행시간-회귀-2026-06-30.md)에 있다.
 
-## Rust → JS result
+## Rust → JS result (full traversal 개선 전 baseline)
 
 반환값 생성과 JS에서 첫 representation을 얻는 전체 시간이다.
 

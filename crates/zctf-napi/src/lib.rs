@@ -2,7 +2,8 @@ use napi::bindgen_prelude::*;
 use napi_derive::napi;
 use zctf_bench_fixtures::{
     consume_bench_report as consume_report, consume_compiled_config,
-    consume_compiled_config_repeated, make_bench_report,
+    consume_compiled_config_repeated, make_bench_report, make_bench_report_compact,
+    make_bench_report_direct_string_ref, make_bench_report_sidecar, make_bench_report_soa,
 };
 
 #[napi(object)]
@@ -24,6 +25,31 @@ pub struct BenchReportObject {
 #[napi]
 pub fn make_report_buffer(count: u32) -> Buffer {
     make_bench_report(count).into()
+}
+
+#[napi]
+pub fn make_report_buffer_mutable(count: u32) -> Buffer {
+    make_bench_report(count).into()
+}
+
+#[napi]
+pub fn make_report_buffer_compact(count: u32) -> Buffer {
+    make_bench_report_compact(count).into()
+}
+
+#[napi]
+pub fn make_report_buffer_direct_string_ref(count: u32) -> Buffer {
+    make_bench_report_direct_string_ref(count).into()
+}
+
+#[napi]
+pub fn make_report_buffer_soa(count: u32) -> Buffer {
+    make_bench_report_soa(count).into()
+}
+
+#[napi]
+pub fn make_report_buffer_sidecar(count: u32) -> Buffer {
+    make_bench_report_sidecar(count).into()
 }
 
 #[napi]

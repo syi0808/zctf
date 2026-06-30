@@ -4,6 +4,11 @@ import { resolve } from "node:path";
 import native from "./native.js";
 import { BenchReportView } from "../fixtures/bench-report.view.js";
 import {
+  DirectStringRefReportView,
+  SidecarReportView,
+  SoAReportView,
+} from "../fixtures/report-layout-variants.js";
+import {
   ConfigWriter,
   compileConfig,
   compileConfigInto,
@@ -35,7 +40,7 @@ function median(values) {
 }
 
 function measure(fn, repetitions = 7) {
-  for (let i = 0; i < 2; i++) sink ^= Number(fn()) || 0;
+  for (let i = 0; i < 5; i++) sink ^= Number(fn()) || 0;
   const values = [];
   for (let i = 0; i < repetitions; i++) {
     global.gc?.();
@@ -47,7 +52,7 @@ function measure(fn, repetitions = 7) {
 }
 
 function repetitionsFor(count) {
-  return count >= 1_000_000 ? 3 : count >= 100_000 ? 5 : 7;
+  return count >= 1_000_000 ? 5 : count >= 100_000 ? 5 : 7;
 }
 
 function measurePerCall(fn, iterations, repetitions = 7) {
@@ -71,18 +76,28 @@ for (const count of sizes) {
     () => JSON.parse(native.makeReportJson(count)).packages.length,
     repetitions,
   );
-  row.zctfReturnAndView = measure(
-    () => BenchReportView.from(native.makeReportBuffer(count)).packageCount,
-    repetitions,
-  );
+  row.zctfReturnAndView = {
+    mutable: measure(
+      () => BenchReportView.from(native.makeReportBufferMutable(count)).packageCount,
+      repetitions,
+    ),
+    compact: measure(
+      () => BenchReportView.from(native.makeReportBufferCompact(count)).packageCount,
+      repetitions,
+    ),
+  };
 
-  const buffer = native.makeReportBuffer(count);
+  const buffer = native.makeReportBufferMutable(count);
+  const compactBuffer = native.makeReportBufferCompact(count);
   const view = BenchReportView.from(buffer);
+  const compactView = BenchReportView.from(compactBuffer);
+  const cachedView = BenchReportView.from(compactBuffer, { cacheStrings: true });
   const object = native.makeReportObject(count);
   const json = native.makeReportJson(count);
   row.storageBytes = {
     jsonUtf8: Buffer.byteLength(json),
-    zctf: buffer.byteLength,
+    zctfMutable: buffer.byteLength,
+    zctfCompact: compactBuffer.byteLength,
   };
   row.firstAccess = {
     object: measure(() => object.packages[0].name.length),
@@ -95,25 +110,104 @@ for (const count of sizes) {
       for (const item of object.packages) sum += item.size;
       return sum;
     }, repetitions),
-    zctf: measure(() => {
+    zctfGetLoop: measure(() => {
       let sum = 0;
-      for (let i = 0; i < view.packages.length; i++) sum += view.packages.get(i).size;
+      const len = compactView.packages.length;
+      for (let i = 0; i < len; i++) sum += compactView.packages.get(i).size;
       return sum;
     }, repetitions),
+    zctfCursor: measure(() => {
+      let sum = 0;
+      const packages = compactView.packages;
+      const cursor = packages.cursor();
+      const len = packages.length;
+      for (let i = 0; i < len; i++) sum += cursor.moveTo(i).size;
+      return sum;
+    }, repetitions),
+    zctfRaw: measure(() => {
+      let sum = 0;
+      compactView.packages.forEachRaw((offset, _index, doc) => {
+        sum += doc.view.getUint32(offset + 8, true);
+      });
+      return sum;
+    }, repetitions),
+    zctfBulk: measure(() => compactView.packages.sumSizes(), repetitions),
+    zctfBulkMutable: measure(() => view.packages.sumSizes(), repetitions),
   };
-  row.decodeNames = {
-    object: measure(() => {
+  row.names = {
+    objectLength: measure(() => {
       let length = 0;
       for (const item of object.packages) length += item.name.length;
       return length;
     }, repetitions),
-    zctf: measure(() => {
+    zctfGetDecodeLength: measure(() => {
       let length = 0;
-      for (let i = 0; i < view.packages.length; i++) length += view.packages.get(i).name.length;
+      const len = compactView.packages.length;
+      for (let i = 0; i < len; i++) {
+        length += compactView.packages.get(i).name.length;
+      }
       return length;
     }, repetitions),
+    zctfBulkDecodeLength: measure(
+      () => compactView.packages.sumNameDecodeLengths(),
+      repetitions,
+    ),
+    zctfByteLength: measure(
+      () => compactView.packages.sumNameByteLengths(),
+      repetitions,
+    ),
+    zctfMaterializeArray: measure(
+      () => compactView.packages.materializeNames().length,
+      repetitions,
+    ),
+    objectPrefixFilter: measure(() => {
+      let matches = 0;
+      for (const item of object.packages) if (item.name.startsWith("package-9")) matches++;
+      return matches;
+    }, repetitions),
+    zctfBytePrefixFilter: measure(
+      () => compactView.packages.countNamesWithPrefix("package-9"),
+      repetitions,
+    ),
   };
-  row.toObject = measure(() => view.toObject().packages.length, repetitions);
+  row.cacheStrings = {
+    disabled: measure(() => compactView.packages.sumNameDecodeLengths(), repetitions),
+    enabledWarm: measure(() => cachedView.packages.sumNameDecodeLengths(), repetitions),
+  };
+  row.toObject = {
+    legacy: measure(() => compactView.toObjectLegacy().packages.length, repetitions),
+    optimized: measure(() => compactView.toObject().packages.length, repetitions),
+  };
+  const directBuffer = native.makeReportBufferDirectStringRef(count);
+  const soaBuffer = native.makeReportBufferSoa(count);
+  const sidecarBuffer = native.makeReportBufferSidecar(count);
+  const direct = DirectStringRefReportView.from(directBuffer);
+  const soa = SoAReportView.from(soaBuffer);
+  const sidecar = SidecarReportView.from(sidecarBuffer);
+  row.layoutVariants = {
+    storageBytes: {
+      aosMutable: buffer.byteLength,
+      aosCompact: compactBuffer.byteLength,
+      directStringRef: directBuffer.byteLength,
+      soa: soaBuffer.byteLength,
+      aosSidecar: sidecarBuffer.byteLength,
+    },
+    sumSizes: {
+      aosCompact: row.sumSizes.zctfBulk,
+      directStringRef: measure(() => direct.sumSizes(), repetitions),
+      soa: measure(() => soa.sumSizes(), repetitions),
+      aosSidecar: measure(() => sidecar.sumSizes(), repetitions),
+    },
+    nameByteLengths: {
+      aosCompact: row.names.zctfByteLength,
+      directStringRef: measure(() => direct.sumNameByteLengths(), repetitions),
+      soa: measure(() => soa.sumNameByteLengths(), repetitions),
+    },
+    materializeNames: {
+      aosCompact: row.names.zctfMaterializeArray,
+      directStringRef: measure(() => direct.materializeNames().length, repetitions),
+    },
+  };
   result.rustToJs.push(row);
   console.log(`  ${count.toLocaleString()} packages complete`);
 }

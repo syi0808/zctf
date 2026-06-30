@@ -74,6 +74,13 @@ export class MutableStringTable {
     return [offset, length];
   }
 
+  rangeUnchecked(id) {
+    const entry = this.tableOffset + id * 8;
+    const offset = this.heapOffset + this.document.view.getUint32(entry, true);
+    const length = this.document.view.getUint32(entry + 4, true);
+    return [offset, length];
+  }
+
   get(id) {
     const cached = this.document.cache?.get(id);
     if (cached !== undefined) return cached;
@@ -81,6 +88,21 @@ export class MutableStringTable {
     const value = decoder.decode(this.document.slice(offset, length));
     this.document.cache?.set(id, value);
     return value;
+  }
+
+  getUnchecked(id) {
+    const cached = this.document.cache?.get(id);
+    if (cached !== undefined) return cached;
+    const [offset, length] = this.rangeUnchecked(id);
+    const value = decoder.decode(
+      this.document.bytes.subarray(offset, offset + length),
+    );
+    this.document.cache?.set(id, value);
+    return value;
+  }
+
+  byteLengthUnchecked(id) {
+    return this.document.view.getUint32(this.tableOffset + id * 8 + 4, true);
   }
 
   allocate(value) {
