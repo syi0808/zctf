@@ -1,0 +1,40 @@
+{
+  "records": {
+    "BenchReport": {
+      "offset": 64,
+      "size": 32,
+      "fields": {
+        "packageCount": { "type": "u32", "offset": 0 },
+        "totalSize": { "type": "u64", "offset": 8 },
+        "durationMs": { "type": "f64", "offset": 16 },
+        "packages": { "type": "FixedList<PackageInfo>", "offset": 24 }
+      }
+    },
+    "PackageInfo": {
+      "size": 16,
+      "fields": {
+        "name": { "type": "StringRef", "offset": 0 },
+        "version": { "type": "StringRef", "offset": 4 },
+        "size": { "type": "u32", "offset": 8 },
+        "dependencyCount": { "type": "u32", "offset": 12 }
+      }
+    },
+    "TransformConfig": {
+      "offset": 32,
+      "size": 32,
+      "fields": {
+        "presence": { "type": "u32", "offset": 0 },
+        "flags": { "type": "u32", "offset": 4 },
+        "floatPrecision": { "type": "f64", "offset": 8 },
+        "plugins": { "type": "FixedList<StringRef>", "offset": 16 },
+        "svgoPlugins": { "type": "FixedList<SvgoPlugin>", "offset": 20 },
+        "jsxRuntime": { "type": "enum8", "offset": 24 },
+        "exportType": { "type": "enum8", "offset": 25 }
+      }
+    }
+  },
+  "enums": {
+    "jsxRuntime": { "automatic": 1, "classic": 2 },
+    "exportType": { "default": 1, "named": 2 }
+  }
+}
