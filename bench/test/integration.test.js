@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 import { transformObject, transformZctf, transformZctfManual } from "../native.js";
 import { TransformResultView } from "../generated/transform-result.view.js";
-import { transformZctfWasm } from "../wasm-runtime.js";
+import { transformJsonWasm, transformZctfWasm } from "../wasm-runtime.js";
 
 test("napi object and generated zctf view expose equivalent values", () => {
   const object = transformObject("<svg/>", 3);
@@ -20,6 +20,16 @@ test("WASM and N-API expose equivalent generated zctf views", () => {
   const wasm = transformZctfWasm("<svg/>", 20);
   try {
     expect(TransformResultView.from(wasm.bytes).toObject()).toEqual(napi);
+  } finally {
+    wasm.free();
+  }
+});
+
+test("WASM stringify/parse and zctf expose equivalent values", () => {
+  const json = transformJsonWasm("<svg/>", 20);
+  const wasm = transformZctfWasm("<svg/>", 20);
+  try {
+    expect(json).toEqual(TransformResultView.from(wasm.bytes).toObject());
   } finally {
     wasm.free();
   }

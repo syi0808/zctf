@@ -9,6 +9,8 @@
 - `transformZctfManual`: 동일한 wire format을 manual writer로 encode
 - `transformZctfWasm`: UTF-8 input을 WASM linear memory로 복사하고 동일한
   Rust model/encoder로 document를 생성한 뒤 explicit free
+- `transformJsonWasm`: 동일한 Rust model을 JSON UTF-8 bytes로 직렬화한 뒤
+  JavaScript에서 decode + `JSON.parse`
 
 ```bash
 pnpm --filter zctf-product-benchmark build
@@ -21,6 +23,8 @@ pnpm --filter zctf-product-benchmark bench
 
 - `Buffer return only`: Rust 생성/encode/N-API transport
 - `WASM bytes return only`: input copy, Rust/WASM encode, linear-memory handle, free
+- `wasm + stringify/parse`: input copy, Rust JSON 직렬화, UTF-8 decode,
+  `JSON.parse`
 - `View.from prebuilt Buffer`: JS header/schema validation 고정 비용
 - `return`: `code`와 list length만 읽는 lazy-access 전체 경로
 - `full traversal` / `toObject`: 모든 warning message까지 materialize하는 경로

@@ -9,5 +9,6 @@ publish = false
 crate-type = ["cdylib"]
 
 [dependencies]
+serde_json = "1"
 zctf = { path = "../../crates/zctf" }
 zctf-product-bench-model = { path = "../model" }

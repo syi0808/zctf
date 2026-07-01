@@ -8,8 +8,9 @@ const wasmBytes = await readFile(wasmPath);
 const { instance } = await WebAssembly.instantiate(wasmBytes);
 const wasm = instance.exports;
 const encoder = new TextEncoder();
+const decoder = new TextDecoder();
 
-export function transformZctfWasm(source, warningCount) {
+function transformWasmBytes(exportName, source, warningCount) {
   const sourceBytes = encoder.encode(source);
   const inputPointer = wasm.zctf_alloc(sourceBytes.byteLength);
   if (sourceBytes.byteLength !== 0) {
@@ -22,7 +23,7 @@ export function transformZctfWasm(source, warningCount) {
 
   let outputPointer;
   try {
-    outputPointer = wasm.transform_zctf(
+    outputPointer = wasm[exportName](
       inputPointer,
       sourceBytes.byteLength,
       warningCount,
@@ -32,7 +33,7 @@ export function transformZctfWasm(source, warningCount) {
   }
 
   if (outputPointer === 0) {
-    throw new Error("WASM zctf transform failed");
+    throw new Error(`WASM ${exportName} transform failed`);
   }
   const header = new DataView(wasm.memory.buffer, outputPointer, 8);
   const allocationLength = header.getUint32(0, true);
@@ -56,4 +57,17 @@ export function transformZctfWasm(source, warningCount) {
       }
     },
   };
+}
+
+export function transformZctfWasm(source, warningCount) {
+  return transformWasmBytes("transform_zctf", source, warningCount);
+}
+
+export function transformJsonWasm(source, warningCount) {
+  const output = transformWasmBytes("transform_json", source, warningCount);
+  try {
+    return JSON.parse(decoder.decode(output.bytes));
+  } finally {
+    output.free();
+  }
 }

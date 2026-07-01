@@ -5,7 +5,7 @@ import {
   transformZctfManual as zctfManual,
 } from "./native.js";
 import { TransformResultView } from "./generated/transform-result.view.js";
-import { transformZctfWasm } from "./wasm-runtime.js";
+import { transformJsonWasm, transformZctfWasm } from "./wasm-runtime.js";
 
 const source = "<svg viewBox='0 0 24 24'><path d='M0 0h24v24H0z'/></svg>";
 const quick = process.env.ZCTF_BENCH_QUICK === "1";
@@ -83,6 +83,15 @@ for (const warningCount of warningCounts) {
     );
 
     bench(
+      "wasm + stringify/parse",
+      () => {
+        const value = transformJsonWasm(source, warningCount);
+        return value.code.length + value.warnings.length;
+      },
+      options,
+    );
+
+    bench(
       "napi[object] full traversal",
       () => {
         const value = napiObject(source, warningCount);
@@ -124,6 +133,21 @@ for (const warningCount of warningCounts) {
         } finally {
           output.free();
         }
+      },
+      options,
+    );
+
+    bench(
+      "wasm + stringify/parse full traversal",
+      () => {
+        const value = transformJsonWasm(source, warningCount);
+        return (
+          value.code.length +
+          value.warnings.reduce(
+            (sum, warning) => sum + warning.message.length,
+            0,
+          )
+        );
       },
       options,
     );

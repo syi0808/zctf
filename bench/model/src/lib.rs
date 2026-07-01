@@ -5,7 +5,21 @@ pub enum WarningLevel {
     Error,
 }
 
+impl serde::Serialize for WarningLevel {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_u8(match self {
+            Self::Info => 0,
+            Self::Warn => 1,
+            Self::Error => 2,
+        })
+    }
+}
+
 #[zctf::record]
+#[derive(serde::Serialize)]
 pub struct Warning {
     pub level: WarningLevel,
     #[zctf(string(direct, encoding = "utf8"))]
@@ -15,6 +29,8 @@ pub struct Warning {
 }
 
 #[zctf::document]
+#[derive(serde::Serialize)]
+#[serde(rename_all = "camelCase")]
 pub struct TransformResult {
     #[zctf(string(direct, encoding = "utf8"))]
     pub code: String,

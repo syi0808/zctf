@@ -21,6 +21,23 @@ pub unsafe extern "C" fn zctf_free_input(ptr: u32, len: u32) {
     }
 }
 
+fn output_bytes(bytes: &[u8]) -> u32 {
+    let Some(total_len) = OUTPUT_HEADER_SIZE.checked_add(bytes.len()) else {
+        return 0;
+    };
+    let Ok(total_len_u32) = u32::try_from(total_len) else {
+        return 0;
+    };
+    let Ok(bytes_len_u32) = u32::try_from(bytes.len()) else {
+        return 0;
+    };
+    let mut output = vec![0_u8; total_len].into_boxed_slice();
+    output[0..4].copy_from_slice(&total_len_u32.to_le_bytes());
+    output[4..8].copy_from_slice(&bytes_len_u32.to_le_bytes());
+    output[OUTPUT_HEADER_SIZE..].copy_from_slice(bytes);
+    Box::into_raw(output) as *mut u8 as usize as u32
+}
+
 /// Returns a pointer to `[allocation_len: u32, document_len: u32, document bytes...]`.
 #[unsafe(no_mangle)]
 pub extern "C" fn transform_zctf(source_ptr: u32, source_len: u32, warning_count: u32) -> u32 {
@@ -33,24 +50,26 @@ pub extern "C" fn transform_zctf(source_ptr: u32, source_len: u32, warning_count
     let Ok(document) = zctf::encode_owned(&transform_result(source, warning_count)) else {
         return 0;
     };
-    let Some(total_len) = OUTPUT_HEADER_SIZE.checked_add(document.len()) else {
+    output_bytes(&document)
+}
+
+/// Returns a pointer to `[allocation_len: u32, json_len: u32, JSON UTF-8 bytes...]`.
+#[unsafe(no_mangle)]
+pub extern "C" fn transform_json(source_ptr: u32, source_len: u32, warning_count: u32) -> u32 {
+    let source = unsafe {
+        std::slice::from_raw_parts(source_ptr as usize as *const u8, source_len as usize)
+    };
+    let Ok(source) = std::str::from_utf8(source) else {
         return 0;
     };
-    let Ok(total_len_u32) = u32::try_from(total_len) else {
+    let Ok(json) = serde_json::to_vec(&transform_result(source, warning_count)) else {
         return 0;
     };
-    let Ok(document_len_u32) = u32::try_from(document.len()) else {
-        return 0;
-    };
-    let mut output = vec![0_u8; total_len].into_boxed_slice();
-    output[0..4].copy_from_slice(&total_len_u32.to_le_bytes());
-    output[4..8].copy_from_slice(&document_len_u32.to_le_bytes());
-    output[OUTPUT_HEADER_SIZE..].copy_from_slice(&document);
-    Box::into_raw(output) as *mut u8 as usize as u32
+    output_bytes(&json)
 }
 
 /// # Safety
-/// `ptr` must identify a live allocation returned by [`transform_zctf`].
+/// `ptr` must identify a live allocation returned by [`transform_zctf`] or [`transform_json`].
 #[unsafe(no_mangle)]
 pub unsafe extern "C" fn zctf_free_output(ptr: u32) {
     if ptr == 0 {
