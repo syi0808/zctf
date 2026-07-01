@@ -70,7 +70,19 @@ test("compact and experimental report layouts preserve traversal results", () =>
   assert.equal(sidecar.sumSizes(), expectedSizes);
   assert.equal(direct.sumNameByteLengths(), expectedNameBytes);
   assert.equal(soa.sumNameByteLengths(), expectedNameBytes);
+  assert.equal(direct.packages.get(3).name, "package-3");
+  assert.equal(direct.packages.get(3).version, "1.3.3");
+  assert.equal(direct.packages.get(3).size, aos.packages.get(3).size);
+  assert.equal(
+    direct.packages.get(3).dependencyCount,
+    aos.packages.get(3).dependencyCount,
+  );
   assert.deepEqual(direct.materializeNames(), aos.packages.materializeNames());
+  assert.deepEqual(
+    direct.materializeStrings(),
+    aos.packages.materializeStrings(),
+  );
+  assert.throws(() => direct.packages.get(count), /out of bounds/);
 });
 
 test("parallel report generation and native aggregates preserve results", () => {

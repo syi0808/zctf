@@ -34,6 +34,7 @@ const result = {
   mutablePipeline: [],
 };
 let sink = 0;
+const utf8Decoder = new TextDecoder();
 
 function median(values) {
   const sorted = [...values].sort((a, b) => a - b);
@@ -66,6 +67,17 @@ function measurePerCall(fn, iterations, repetitions = 7) {
       }, repetitions) / iterations
     ).toFixed(6),
   );
+}
+
+function materializeDirectNamesWithTextDecoder(report) {
+  const result = new Array(report.length);
+  let item = report.itemsOffset;
+  for (let i = 0; i < result.length; i++, item += 24) {
+    const offset = report.view.getUint32(item, true);
+    const length = report.view.getUint32(item + 4, true);
+    result[i] = utf8Decoder.decode(report.bytes.subarray(offset, offset + length));
+  }
+  return result;
 }
 
 console.log("Benchmark 1/3: Rust → JS result");
@@ -265,7 +277,31 @@ for (const count of sizes) {
     },
     materializeNames: {
       aosCompact: row.names.zctfMaterializeArray,
+      directStringRefTextDecoder: measure(
+        () => materializeDirectNamesWithTextDecoder(direct).length,
+        repetitions,
+      ),
       directStringRef: measure(() => direct.materializeNames().length, repetitions),
+    },
+    nameGetterScan: {
+      aosCompact: measure(() => {
+        let length = 0;
+        for (let i = 0; i < compactView.packages.length; i++) {
+          length += compactView.packages.get(i).name.length;
+        }
+        return length;
+      }, repetitions),
+      directStringRef: measure(() => {
+        let length = 0;
+        for (let i = 0; i < direct.packages.length; i++) {
+          length += direct.packages.get(i).name.length;
+        }
+        return length;
+      }, repetitions),
+    },
+    materializeStrings: {
+      aosCompact: measure(() => compactView.packages.materializeStrings().length, repetitions),
+      directStringRef: measure(() => direct.materializeStrings().length, repetitions),
     },
   };
   result.rustToJs.push(row);

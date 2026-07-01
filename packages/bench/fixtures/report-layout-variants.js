@@ -1,12 +1,20 @@
 import { BenchReportView } from "./bench-report.view.js";
+import { Buffer } from "node:buffer";
 
 const DIRECT_MAGIC = 0x4452_435a;
 const SOA_MAGIC = 0x5341_435a;
-const decoder = new TextDecoder();
+const DIRECT_HEADER_SIZE = 32;
+const DIRECT_RECORD_SIZE = 24;
 
 function asBytes(bytes) {
   if (!(bytes instanceof Uint8Array)) throw new TypeError("Uint8Array required");
   return bytes;
+}
+
+function asBuffer(bytes) {
+  return Buffer.isBuffer(bytes)
+    ? bytes
+    : Buffer.from(bytes.buffer, bytes.byteOffset, bytes.byteLength);
 }
 
 function uint32Column(bytes, offset, length) {
@@ -46,41 +54,135 @@ export class DirectStringRefReportView {
     const view = new DataView(bytes.buffer, bytes.byteOffset, bytes.byteLength);
     if (view.getUint32(0, true) !== DIRECT_MAGIC) throw new TypeError("invalid direct-ref report");
     if (view.getUint32(16, true) !== bytes.byteLength) throw new RangeError("invalid report size");
-    return new DirectStringRefReportView(bytes, view);
+    const length = view.getUint32(4, true);
+    const itemsOffset = view.getUint32(8, true);
+    const heapOffset = view.getUint32(12, true);
+    if (
+      itemsOffset < DIRECT_HEADER_SIZE ||
+      itemsOffset + length * DIRECT_RECORD_SIZE !== heapOffset ||
+      heapOffset > bytes.byteLength
+    ) {
+      throw new RangeError("invalid direct-ref layout");
+    }
+    return new DirectStringRefReportView(asBuffer(bytes), view, length, itemsOffset);
   }
 
-  constructor(bytes, view) {
-    this.bytes = bytes;
+  constructor(buffer, view, length, itemsOffset) {
+    this.buffer = buffer;
+    this.bytes = buffer;
     this.view = view;
-    this.length = view.getUint32(4, true);
-    this.itemsOffset = view.getUint32(8, true);
+    this.length = length;
+    this.itemsOffset = itemsOffset;
+    this.packages = new DirectStringRefPackageListView(this);
+  }
+
+  sumSizes() {
+    return this.packages.sumSizes();
+  }
+
+  sumNameByteLengths() {
+    return this.packages.sumNameByteLengths();
+  }
+
+  materializeNames() {
+    return this.packages.materializeNames();
+  }
+
+  materializeStrings() {
+    return this.packages.materializeStrings();
+  }
+}
+
+export class DirectStringRefPackageInfoView {
+  constructor(report, offset) {
+    this.report = report;
+    this.offset = offset;
+  }
+
+  get name() {
+    const offset = this.report.view.getUint32(this.offset, true);
+    const length = this.report.view.getUint32(this.offset + 4, true);
+    return this.report.buffer.toString("latin1", offset, offset + length);
+  }
+
+  get version() {
+    const offset = this.report.view.getUint32(this.offset + 8, true);
+    const length = this.report.view.getUint32(this.offset + 12, true);
+    return this.report.buffer.toString("latin1", offset, offset + length);
+  }
+
+  get size() {
+    return this.report.view.getUint32(this.offset + 16, true);
+  }
+
+  get dependencyCount() {
+    return this.report.view.getUint32(this.offset + 20, true);
+  }
+}
+
+export class DirectStringRefPackageListView {
+  constructor(report) {
+    this.report = report;
+    this.length = report.length;
+  }
+
+  get(index) {
+    if (!Number.isInteger(index) || index < 0 || index >= this.length) {
+      throw new RangeError("package index out of bounds");
+    }
+    return new DirectStringRefPackageInfoView(
+      this.report,
+      this.report.itemsOffset + index * DIRECT_RECORD_SIZE,
+    );
   }
 
   sumSizes() {
     let total = 0;
-    let item = this.itemsOffset + 16;
-    for (let i = 0; i < this.length; i++, item += 24) {
-      total += this.view.getUint32(item, true);
+    let item = this.report.itemsOffset + 16;
+    for (let i = 0; i < this.length; i++, item += DIRECT_RECORD_SIZE) {
+      total += this.report.view.getUint32(item, true);
     }
     return total;
   }
 
   sumNameByteLengths() {
     let total = 0;
-    let item = this.itemsOffset + 4;
-    for (let i = 0; i < this.length; i++, item += 24) {
-      total += this.view.getUint32(item, true);
+    let item = this.report.itemsOffset + 4;
+    for (let i = 0; i < this.length; i++, item += DIRECT_RECORD_SIZE) {
+      total += this.report.view.getUint32(item, true);
     }
     return total;
   }
 
   materializeNames() {
     const result = new Array(this.length);
-    let item = this.itemsOffset;
-    for (let i = 0; i < result.length; i++, item += 24) {
-      const offset = this.view.getUint32(item, true);
-      const length = this.view.getUint32(item + 4, true);
-      result[i] = decoder.decode(this.bytes.subarray(offset, offset + length));
+    let item = this.report.itemsOffset;
+    for (let i = 0; i < result.length; i++, item += DIRECT_RECORD_SIZE) {
+      const offset = this.report.view.getUint32(item, true);
+      const length = this.report.view.getUint32(item + 4, true);
+      result[i] = this.report.buffer.toString("latin1", offset, offset + length);
+    }
+    return result;
+  }
+
+  materializeStrings() {
+    const result = new Array(this.length * 2);
+    let item = this.report.itemsOffset;
+    for (let i = 0; i < this.length; i++, item += DIRECT_RECORD_SIZE) {
+      const nameOffset = this.report.view.getUint32(item, true);
+      const nameLength = this.report.view.getUint32(item + 4, true);
+      const versionOffset = this.report.view.getUint32(item + 8, true);
+      const versionLength = this.report.view.getUint32(item + 12, true);
+      result[i * 2] = this.report.buffer.toString(
+        "latin1",
+        nameOffset,
+        nameOffset + nameLength,
+      );
+      result[i * 2 + 1] = this.report.buffer.toString(
+        "latin1",
+        versionOffset,
+        versionOffset + versionLength,
+      );
     }
     return result;
   }

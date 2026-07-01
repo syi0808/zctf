@@ -149,6 +149,19 @@ export class FixedPackageListView extends FixedListView {
     return result;
   }
 
+  materializeStrings() {
+    const result = new Array(this._length * 2);
+    const view = this.document.view;
+    const strings = this.document.strings;
+    let offset = this.itemsOffset;
+    for (let i = 0; i < this._length; i++) {
+      result[i * 2] = strings.getUnchecked(view.getUint32(offset, true));
+      result[i * 2 + 1] = strings.getUnchecked(view.getUint32(offset + 4, true));
+      offset += PACKAGE_SIZE;
+    }
+    return result;
+  }
+
   countNamesWithPrefix(prefix) {
     if (typeof prefix !== "string") throw new TypeError("prefix must be a string");
     const expected = new TextEncoder().encode(prefix);

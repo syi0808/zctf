@@ -1,0 +1,769 @@
+{
+  "metadata": {
+    "timestamp": "2026-07-01T04:48:23.208Z",
+    "platform": "darwin-arm64",
+    "node": "v24.11.0",
+    "quick": false,
+    "unit": "milliseconds",
+    "sink": 0
+  },
+  "reportGeneration": [
+    {
+      "count": 1000,
+      "compact": {
+        "sequential": 0.014,
+        "parallelLocal": 0.019,
+        "automatic": 0.016
+      },
+      "directStringRef": {
+        "sequential": 0.017,
+        "parallelLocal": 0.019
+      },
+      "soa": {
+        "sequential": 0.012,
+        "parallelLocal": 0.012
+      }
+    },
+    {
+      "count": 10000,
+      "compact": {
+        "sequential": 0.096,
+        "parallelLocal": 0.114,
+        "automatic": 0.097
+      },
+      "directStringRef": {
+        "sequential": 0.096,
+        "parallelLocal": 0.121
+      },
+      "soa": {
+        "sequential": 0.059,
+        "parallelLocal": 0.069
+      }
+    },
+    {
+      "count": 100000,
+      "compact": {
+        "sequential": 0.945,
+        "parallelLocal": 0.938,
+        "automatic": 0.786
+      },
+      "directStringRef": {
+        "sequential": 0.955,
+        "parallelLocal": 0.724
+      },
+      "soa": {
+        "sequential": 0.629,
+        "parallelLocal": 0.537
+      }
+    },
+    {
+      "count": 1000000,
+      "compact": {
+        "sequential": 9.511,
+        "parallelLocal": 4.887,
+        "automatic": 4.989
+      },
+      "directStringRef": {
+        "sequential": 9.514,
+        "parallelLocal": 4.452
+      },
+      "soa": {
+        "sequential": 6.094,
+        "parallelLocal": 3.042
+      }
+    }
+  ],
+  "rustToJs": [
+    {
+      "count": 1000,
+      "objectReturn": 0.382,
+      "jsonReturnAndParse": 0.268,
+      "zctfReturnAndView": {
+        "mutable": 0.041,
+        "compact": 0.037
+      },
+      "storageBytes": {
+        "jsonUtf8": 74887,
+        "zctfMutable": 112176,
+        "zctfCompact": 48902
+      },
+      "firstAccess": {
+        "object": 0.001,
+        "jsonParse": 0.157,
+        "zctf": 0.012
+      },
+      "sumSizes": {
+        "object": 0.008,
+        "zctfGetLoop": 0.071,
+        "zctfCursor": 0.091,
+        "zctfRaw": 0.023,
+        "zctfBulk": 0.021,
+        "zctfBulkMutable": 0.002,
+        "zctfNative": 0.002,
+        "jsonParseAndLoop": 0.163
+      },
+      "names": {
+        "objectLength": 0.008,
+        "zctfGetDecodeLength": 0.205,
+        "zctfBulkDecodeLength": 0.103,
+        "zctfByteLength": 0.003,
+        "zctfNativeByteLength": 0.002,
+        "zctfMaterializeArray": 0.055,
+        "objectPrefixFilter": 0.021,
+        "zctfBytePrefixFilter": 0.319,
+        "zctfNativeBytePrefixFilter": 0.005,
+        "jsonParsePrefixFilter": 0.171
+      },
+      "cacheStrings": {
+        "disabled": 0.05,
+        "enabledWarm": 0.033
+      },
+      "toObject": {
+        "legacy": 0.449,
+        "optimized": 0.206
+      },
+      "layoutVariants": {
+        "storageBytes": {
+          "aosMutable": 112176,
+          "aosCompact": 48902,
+          "directStringRef": 40822,
+          "soa": 26922,
+          "aosSidecar": 56902
+        },
+        "sumSizes": {
+          "aosCompact": 0.021,
+          "directStringRef": 0.009,
+          "soa": 0.006,
+          "aosSidecar": 0.019
+        },
+        "nameByteLengths": {
+          "aosCompact": 0.003,
+          "directStringRef": 0.022,
+          "soa": 0.022
+        },
+        "materializeNames": {
+          "aosCompact": 0.055,
+          "directStringRefTextDecoder": 0.17,
+          "directStringRef": 0.102
+        },
+        "nameGetterScan": {
+          "aosCompact": 0.185,
+          "directStringRef": 0.095
+        },
+        "materializeStrings": {
+          "aosCompact": 0.185,
+          "directStringRef": 0.19
+        }
+      }
+    },
+    {
+      "count": 10000,
+      "objectReturn": 3.63,
+      "jsonReturnAndParse": 2.537,
+      "zctfReturnAndView": {
+        "mutable": 0.122,
+        "compact": 0.111
+      },
+      "storageBytes": {
+        "jsonUtf8": 768295,
+        "zctfMutable": 1120176,
+        "zctfCompact": 498002
+      },
+      "firstAccess": {
+        "object": 0,
+        "jsonParse": 1.426,
+        "zctf": 0.008
+      },
+      "sumSizes": {
+        "object": 0.035,
+        "zctfGetLoop": 0.03,
+        "zctfCursor": 0.432,
+        "zctfRaw": 0.179,
+        "zctfBulk": 0.01,
+        "zctfBulkMutable": 0.009,
+        "zctfNative": 0.003,
+        "jsonParseAndLoop": 1.442
+      },
+      "names": {
+        "objectLength": 0.038,
+        "zctfGetDecodeLength": 1.399,
+        "zctfBulkDecodeLength": 0.505,
+        "zctfByteLength": 0.09,
+        "zctfNativeByteLength": 0.008,
+        "zctfMaterializeArray": 0.61,
+        "objectPrefixFilter": 0.127,
+        "zctfBytePrefixFilter": 0.118,
+        "zctfNativeBytePrefixFilter": 0.033,
+        "jsonParsePrefixFilter": 1.553
+      },
+      "cacheStrings": {
+        "disabled": 0.498,
+        "enabledWarm": 0.171
+      },
+      "toObject": {
+        "legacy": 2.574,
+        "optimized": 1.017
+      },
+      "layoutVariants": {
+        "storageBytes": {
+          "aosMutable": 1120176,
+          "aosCompact": 498002,
+          "directStringRef": 417922,
+          "soa": 278922,
+          "aosSidecar": 578002
+        },
+        "sumSizes": {
+          "aosCompact": 0.01,
+          "directStringRef": 0.053,
+          "soa": 0.046,
+          "aosSidecar": 0.013
+        },
+        "nameByteLengths": {
+          "aosCompact": 0.09,
+          "directStringRef": 0.01,
+          "soa": 0.009
+        },
+        "materializeNames": {
+          "aosCompact": 0.61,
+          "directStringRefTextDecoder": 0.737,
+          "directStringRef": 0.345
+        },
+        "nameGetterScan": {
+          "aosCompact": 1.45,
+          "directStringRef": 0.514
+        },
+        "materializeStrings": {
+          "aosCompact": 1.085,
+          "directStringRef": 0.727
+        }
+      }
+    },
+    {
+      "count": 100000,
+      "objectReturn": 37.087,
+      "jsonReturnAndParse": 25.439,
+      "zctfReturnAndView": {
+        "mutable": 0.957,
+        "compact": 0.79
+      },
+      "storageBytes": {
+        "jsonUtf8": 7882354,
+        "zctfMutable": 11200176,
+        "zctfCompact": 5079002
+      },
+      "firstAccess": {
+        "object": 0.001,
+        "jsonParse": 13.996,
+        "zctf": 0.01
+      },
+      "sumSizes": {
+        "object": 0.153,
+        "zctfGetLoop": 1.979,
+        "zctfCursor": 1.498,
+        "zctfRaw": 1.274,
+        "zctfBulk": 0.489,
+        "zctfBulkMutable": 0.078,
+        "zctfNative": 0.029,
+        "jsonParseAndLoop": 14.315
+      },
+      "names": {
+        "objectLength": 0.16,
+        "zctfGetDecodeLength": 10.376,
+        "zctfBulkDecodeLength": 5.556,
+        "zctfByteLength": 1.393,
+        "zctfNativeByteLength": 0.066,
+        "zctfMaterializeArray": 5.576,
+        "objectPrefixFilter": 1.383,
+        "zctfBytePrefixFilter": 3.319,
+        "zctfNativeBytePrefixFilter": 0.283,
+        "jsonParsePrefixFilter": 15.69
+      },
+      "cacheStrings": {
+        "disabled": 5.495,
+        "enabledWarm": 3.204
+      },
+      "toObject": {
+        "legacy": 19.203,
+        "optimized": 11.228
+      },
+      "layoutVariants": {
+        "storageBytes": {
+          "aosMutable": 11200176,
+          "aosCompact": 5079002,
+          "directStringRef": 4278922,
+          "soa": 2888922,
+          "aosSidecar": 5879002
+        },
+        "sumSizes": {
+          "aosCompact": 0.489,
+          "directStringRef": 0.077,
+          "soa": 0.077,
+          "aosSidecar": 0.079
+        },
+        "nameByteLengths": {
+          "aosCompact": 1.393,
+          "directStringRef": 0.079,
+          "soa": 0.079
+        },
+        "materializeNames": {
+          "aosCompact": 5.576,
+          "directStringRefTextDecoder": 8.932,
+          "directStringRef": 4.368
+        },
+        "nameGetterScan": {
+          "aosCompact": 10.243,
+          "directStringRef": 4.744
+        },
+        "materializeStrings": {
+          "aosCompact": 11.118,
+          "directStringRef": 7.984
+        }
+      }
+    },
+    {
+      "count": 1000000,
+      "objectReturn": 422.14,
+      "jsonReturnAndParse": 278.436,
+      "zctfReturnAndView": {
+        "mutable": 10.359,
+        "compact": 5.837
+      },
+      "storageBytes": {
+        "jsonUtf8": 80822871,
+        "zctfMutable": 112000176,
+        "zctfCompact": 51789002
+      },
+      "firstAccess": {
+        "object": 0.002,
+        "jsonParse": 163.261,
+        "zctf": 0.032
+      },
+      "sumSizes": {
+        "object": 10.577,
+        "zctfGetLoop": 10.664,
+        "zctfCursor": 8.561,
+        "zctfRaw": 8.238,
+        "zctfBulk": 6.39,
+        "zctfBulkMutable": 6.292,
+        "zctfNative": 0.29,
+        "jsonParseAndLoop": 184.356
+      },
+      "names": {
+        "objectLength": 12.169,
+        "zctfGetDecodeLength": 113.489,
+        "zctfBulkDecodeLength": 48.403,
+        "zctfByteLength": 7.686,
+        "zctfNativeByteLength": 0.623,
+        "zctfMaterializeArray": 49.253,
+        "objectPrefixFilter": 21.006,
+        "zctfBytePrefixFilter": 19.472,
+        "zctfNativeBytePrefixFilter": 3.456,
+        "jsonParsePrefixFilter": 188.988
+      },
+      "cacheStrings": {
+        "disabled": 48.93,
+        "enabledWarm": 53.432
+      },
+      "toObject": {
+        "legacy": 274.62,
+        "optimized": 131.045
+      },
+      "layoutVariants": {
+        "storageBytes": {
+          "aosMutable": 112000176,
+          "aosCompact": 51789002,
+          "directStringRef": 43788922,
+          "soa": 29888922,
+          "aosSidecar": 59789002
+        },
+        "sumSizes": {
+          "aosCompact": 6.39,
+          "directStringRef": 8.173,
+          "soa": 8.006,
+          "aosSidecar": 8.242
+        },
+        "nameByteLengths": {
+          "aosCompact": 7.686,
+          "directStringRef": 8.191,
+          "soa": 8.365
+        },
+        "materializeNames": {
+          "aosCompact": 49.253,
+          "directStringRefTextDecoder": 96.283,
+          "directStringRef": 39.65
+        },
+        "nameGetterScan": {
+          "aosCompact": 104.288,
+          "directStringRef": 41.196
+        },
+        "materializeStrings": {
+          "aosCompact": 100.546,
+          "directStringRef": 73.737
+        }
+      }
+    }
+  ],
+  "configInput": [
+    {
+      "shape": "small",
+      "iterations": 20000,
+      "bytes": {
+        "json": 79,
+        "baselineZctf": 56,
+        "optimizedZctf": 64
+      },
+      "strings": {
+        "known": 0,
+        "ascii": 0,
+        "utf8Fallback": 0
+      },
+      "compileOnly": {
+        "baseline": 0.000289,
+        "optimized": 0.000337,
+        "tempWriter": 0.000067
+      },
+      "rustReadOnly": {
+        "baseline": 0.000035,
+        "optimized": 0.000037,
+        "repeatedView100": 0.000234,
+        "promotedLocal100": 0.00008
+      },
+      "single": {
+        "napiObject": 0.000661,
+        "jsonStringifyAndRustParse": 0.000559,
+        "baselineCompileAndRead": 0.000326,
+        "optimizedCompileAndRead": 0.000392,
+        "syncTempCompileAndRead": 0.000108
+      },
+      "fullTransform": {
+        "napiObject": 0.000753,
+        "jsonStringifyAndRustParse": 0.000631,
+        "baselineCompileAndRead": 0.000401,
+        "optimizedCompileAndRead": 0.000489,
+        "syncTempCompileAndRead": 0.000191
+      },
+      "reuse": {
+        "napiObject": 13.468,
+        "jsonRustParse": 8.427,
+        "compiledRead": 0.735,
+        "configHandle": 1.795
+      }
+    },
+    {
+      "shape": "medium",
+      "iterations": 20000,
+      "bytes": {
+        "json": 863,
+        "baselineZctf": 682,
+        "optimizedZctf": 586
+      },
+      "strings": {
+        "known": 0,
+        "ascii": 20,
+        "utf8Fallback": 0
+      },
+      "compileOnly": {
+        "baseline": 0.004265,
+        "optimized": 0.001326,
+        "tempWriter": 0.001008
+      },
+      "rustReadOnly": {
+        "baseline": 0.000058,
+        "optimized": 0.000075,
+        "repeatedView100": 0.000262,
+        "promotedLocal100": 0.000107
+      },
+      "single": {
+        "napiObject": 0.005048,
+        "jsonStringifyAndRustParse": 0.00508,
+        "baselineCompileAndRead": 0.0044,
+        "optimizedCompileAndRead": 0.001424,
+        "syncTempCompileAndRead": 0.001256
+      },
+      "fullTransform": {
+        "napiObject": 0.005176,
+        "jsonStringifyAndRustParse": 0.005149,
+        "baselineCompileAndRead": 0.004531,
+        "optimizedCompileAndRead": 0.001572,
+        "syncTempCompileAndRead": 0.001201
+      },
+      "reuse": {
+        "napiObject": 101.549,
+        "jsonRustParse": 74.064,
+        "compiledRead": 1.438,
+        "configHandle": 1.698
+      }
+    },
+    {
+      "shape": "large",
+      "iterations": 5000,
+      "bytes": {
+        "json": 7418,
+        "baselineZctf": 5992,
+        "optimizedZctf": 5176
+      },
+      "strings": {
+        "known": 0,
+        "ascii": 200,
+        "utf8Fallback": 0
+      },
+      "compileOnly": {
+        "baseline": 0.03893,
+        "optimized": 0.009749,
+        "tempWriter": 0.009013
+      },
+      "rustReadOnly": {
+        "baseline": 0.000144,
+        "optimized": 0.000389,
+        "repeatedView100": 0.000484,
+        "promotedLocal100": 0.000333
+      },
+      "single": {
+        "napiObject": 0.038657,
+        "jsonStringifyAndRustParse": 0.037226,
+        "baselineCompileAndRead": 0.039087,
+        "optimizedCompileAndRead": 0.010156,
+        "syncTempCompileAndRead": 0.009447
+      },
+      "fullTransform": {
+        "napiObject": 0.039062,
+        "jsonStringifyAndRustParse": 0.037212,
+        "baselineCompileAndRead": 0.038938,
+        "optimizedCompileAndRead": 0.010288,
+        "syncTempCompileAndRead": 0.009467
+      },
+      "reuse": {
+        "napiObject": 195.804,
+        "jsonRustParse": 143.63,
+        "compiledRead": 1.984,
+        "configHandle": 0.436
+      }
+    },
+    {
+      "shape": "stringHeavy",
+      "iterations": 5000,
+      "bytes": {
+        "json": 16818,
+        "baselineZctf": 15392,
+        "optimizedZctf": 14576
+      },
+      "strings": {
+        "known": 0,
+        "ascii": 200,
+        "utf8Fallback": 0
+      },
+      "compileOnly": {
+        "baseline": 0.044664,
+        "optimized": 0.031329,
+        "tempWriter": 0.019938
+      },
+      "rustReadOnly": {
+        "baseline": 0.000143,
+        "optimized": 0.000389,
+        "repeatedView100": 0.000484,
+        "promotedLocal100": 0.000332
+      },
+      "single": {
+        "napiObject": 0.045474,
+        "jsonStringifyAndRustParse": 0.048032,
+        "baselineCompileAndRead": 0.044893,
+        "optimizedCompileAndRead": 0.029289,
+        "syncTempCompileAndRead": 0.020277
+      },
+      "fullTransform": {
+        "napiObject": 0.045822,
+        "jsonStringifyAndRustParse": 0.048355,
+        "baselineCompileAndRead": 0.045145,
+        "optimizedCompileAndRead": 0.029096,
+        "syncTempCompileAndRead": 0.020345
+      },
+      "reuse": {
+        "napiObject": 228.65,
+        "jsonRustParse": 177.89,
+        "compiledRead": 1.938,
+        "configHandle": 0.435
+      }
+    },
+    {
+      "shape": "pluginHeavy",
+      "iterations": 5000,
+      "bytes": {
+        "json": 6938,
+        "baselineZctf": 5512,
+        "optimizedZctf": 1296
+      },
+      "strings": {
+        "known": 200,
+        "ascii": 0,
+        "utf8Fallback": 0
+      },
+      "compileOnly": {
+        "baseline": 0.040099,
+        "optimized": 0.004895,
+        "tempWriter": 0.004511
+      },
+      "rustReadOnly": {
+        "baseline": 0.000142,
+        "optimized": 0.00037,
+        "repeatedView100": 0.000467,
+        "promotedLocal100": 0.000314
+      },
+      "single": {
+        "napiObject": 0.039831,
+        "jsonStringifyAndRustParse": 0.038075,
+        "baselineCompileAndRead": 0.039999,
+        "optimizedCompileAndRead": 0.005365,
+        "syncTempCompileAndRead": 0.004879
+      },
+      "fullTransform": {
+        "napiObject": 0.039132,
+        "jsonStringifyAndRustParse": 0.037974,
+        "baselineCompileAndRead": 0.04042,
+        "optimizedCompileAndRead": 0.005347,
+        "syncTempCompileAndRead": 0.004958
+      },
+      "reuse": {
+        "napiObject": 197.283,
+        "jsonRustParse": 145.458,
+        "compiledRead": 1.855,
+        "configHandle": 0.428
+      }
+    },
+    {
+      "shape": "unicodeHeavy",
+      "iterations": 5000,
+      "bytes": {
+        "json": 11418,
+        "baselineZctf": 9992,
+        "optimizedZctf": 9176
+      },
+      "strings": {
+        "known": 0,
+        "ascii": 0,
+        "utf8Fallback": 200
+      },
+      "compileOnly": {
+        "baseline": 0.046184,
+        "optimized": 0.024224,
+        "tempWriter": 0.023291
+      },
+      "rustReadOnly": {
+        "baseline": 0.000144,
+        "optimized": 0.00039,
+        "repeatedView100": 0.000484,
+        "promotedLocal100": 0.000333
+      },
+      "single": {
+        "napiObject": 0.047683,
+        "jsonStringifyAndRustParse": 0.053656,
+        "baselineCompileAndRead": 0.04636,
+        "optimizedCompileAndRead": 0.024549,
+        "syncTempCompileAndRead": 0.023758
+      },
+      "fullTransform": {
+        "napiObject": 0.047937,
+        "jsonStringifyAndRustParse": 0.053555,
+        "baselineCompileAndRead": 0.046843,
+        "optimizedCompileAndRead": 0.024854,
+        "syncTempCompileAndRead": 0.023645
+      },
+      "reuse": {
+        "napiObject": 240.152,
+        "jsonRustParse": 207.827,
+        "compiledRead": 1.992,
+        "configHandle": 0.44
+      }
+    },
+    {
+      "shape": "defaultHeavy",
+      "iterations": 5000,
+      "bytes": {
+        "json": 81,
+        "baselineZctf": 56,
+        "optimizedZctf": 64
+      },
+      "strings": {
+        "known": 0,
+        "ascii": 0,
+        "utf8Fallback": 0
+      },
+      "compileOnly": {
+        "baseline": 0.000627,
+        "optimized": 0.000484,
+        "tempWriter": 0.000085
+      },
+      "rustReadOnly": {
+        "baseline": 0.000036,
+        "optimized": 0.000039,
+        "repeatedView100": 0.000236,
+        "promotedLocal100": 0.000083
+      },
+      "single": {
+        "napiObject": 0.000675,
+        "jsonStringifyAndRustParse": 0.000562,
+        "baselineCompileAndRead": 0.000388,
+        "optimizedCompileAndRead": 0.00048,
+        "syncTempCompileAndRead": 0.000144
+      },
+      "fullTransform": {
+        "napiObject": 0.000795,
+        "jsonStringifyAndRustParse": 0.000646,
+        "baselineCompileAndRead": 0.000475,
+        "optimizedCompileAndRead": 0.00056,
+        "syncTempCompileAndRead": 0.000209
+      },
+      "reuse": {
+        "napiObject": 3.372,
+        "jsonRustParse": 1.919,
+        "compiledRead": 0.186,
+        "configHandle": 0.409
+      }
+    }
+  ],
+  "mutablePipeline": [
+    {
+      "count": 10000,
+      "numeric": {
+        "objectNapi": 5.317,
+        "objectJson": 4.887,
+        "zctf": 0.017
+      },
+      "string": {
+        "objectJson": 10.883,
+        "zctf": 2.648,
+        "heapGrowthBytes": 118890,
+        "stringEntriesAdded": 10000
+      },
+      "dependencyCount": {
+        "objectNapi": 4.66,
+        "zctf": 0.017
+      },
+      "listPush": {
+        "objectNapi": 12.64,
+        "zctf": 5.118
+      }
+    },
+    {
+      "count": 100000,
+      "numeric": {
+        "objectNapi": 42.987,
+        "objectJson": 43,
+        "zctf": 1.703
+      },
+      "string": {
+        "objectJson": 87.858,
+        "zctf": 25.287,
+        "heapGrowthBytes": 1288890,
+        "stringEntriesAdded": 100000
+      },
+      "dependencyCount": {
+        "objectNapi": 43.517,
+        "zctf": 2.252
+      },
+      "listPush": {
+        "objectNapi": 125.496,
+        "zctf": 41.817
+      }
+    }
+  ]
+}
