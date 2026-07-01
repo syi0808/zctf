@@ -19,7 +19,7 @@
       "type": {
         "kind": "string",
         "encoding": "utf8",
-        "direct": false
+        "direct": true
       },
       "skip": false
     },

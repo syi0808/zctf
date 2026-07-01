@@ -10,6 +10,7 @@ pub enum WarningLevel {
 #[zctf::record]
 pub struct Warning {
     pub level: WarningLevel,
+    #[zctf(string(direct, encoding = "utf8"))]
     pub message: String,
     pub start: u32,
     pub end: u32,
@@ -51,6 +52,15 @@ fn warning(index: u32) -> Warning {
     }
 }
 
+fn warning_object(index: u32) -> WarningObject {
+    WarningObject {
+        level: (index % 3) as u8,
+        message: format!("warning-{index}: generated benchmark diagnostic"),
+        start: index * 10,
+        end: index * 10 + 5,
+    }
+}
+
 fn result(source: &str, warning_count: u32) -> TransformResult {
     TransformResult {
         code: format!("export default function Icon() {{ return {:?}; }}", source),
@@ -61,20 +71,10 @@ fn result(source: &str, warning_count: u32) -> TransformResult {
 
 #[napi]
 pub fn transform_object(source: String, warning_count: u32) -> TransformObject {
-    let value = result(&source, warning_count);
     TransformObject {
-        code: value.code,
-        duration_ms: value.duration_ms,
-        warnings: value
-            .warnings
-            .into_iter()
-            .map(|warning| WarningObject {
-                level: warning.level.to_zctf_repr(),
-                message: warning.message,
-                start: warning.start,
-                end: warning.end,
-            })
-            .collect(),
+        code: format!("export default function Icon() {{ return {:?}; }}", source),
+        duration_ms: 1.25,
+        warnings: (0..warning_count).map(warning_object).collect(),
     }
 }
 
@@ -99,7 +99,7 @@ pub fn transform_zctf_manual(
         )
         .map_err(|error| napi::Error::from_reason(error.to_string()))?;
     writer
-        .set_string(root, &value.code)
+        .set_direct_string(root, &value.code)
         .map_err(|error| napi::Error::from_reason(error.to_string()))?;
     writer
         .set_f64(root + 8, value.duration_ms)

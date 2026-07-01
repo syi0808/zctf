@@ -42,7 +42,6 @@ export class ZctfDocument extends MemoryReader {
       typeof Buffer !== "undefined" && Buffer.isBuffer(this.bytes)
         ? (start, length) => this.bytes.toString("utf8", start, start + length)
         : (start, length) => decoder.decode(this.bytes.subarray(start, start + length));
-    for (let id = 0; id < this.stringCount; id++) this.stringRange(id);
   }
 
   stringRange(id) {
@@ -58,6 +57,13 @@ export class ZctfDocument extends MemoryReader {
 
   string(id) {
     const [start, length] = this.stringRange(id);
+    return this.decodeUtf8(start, length);
+  }
+
+  directString(offset) {
+    const start = this.u32(offset);
+    const length = this.u32(offset + 4);
+    this.slice(start, length);
     return this.decodeUtf8(start, length);
   }
 }

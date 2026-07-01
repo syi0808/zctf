@@ -34,9 +34,12 @@ fn type_layout(ty: &Type, schema: &Schema, stack: &mut Vec<String>) -> Result<La
     Ok(match ty {
         Type::Bool | Type::U8 | Type::I8 => Layout { size: 1, align: 1 },
         Type::U16 | Type::I16 => Layout { size: 2, align: 2 },
-        Type::U32 | Type::I32 | Type::F32 | Type::String { .. } | Type::List { .. } => {
-            Layout { size: 4, align: 4 }
-        }
+        Type::U32
+        | Type::I32
+        | Type::F32
+        | Type::String { direct: false, .. }
+        | Type::List { .. } => Layout { size: 4, align: 4 },
+        Type::String { direct: true, .. } => Layout { size: 8, align: 4 },
         Type::U64 | Type::I64 | Type::F64 => Layout { size: 8, align: 8 },
         Type::Option { item } => {
             let inner = type_layout(item, schema, stack)?;
@@ -179,48 +182,67 @@ fn emit_js_record(
         out.push_str(&format!("  static from(bytes) {{\n    const document = ZctfDocument.from(bytes, {{ schemaId: SCHEMA_ID, layoutVersion: LAYOUT_VERSION }});\n    return new {}View(document, document.rootOffset);\n  }}\n", record.name));
     }
     let offsets = field_offsets(record, schema)?;
+    for (field, (offset, _)) in record
+        .fields
+        .iter()
+        .filter(|f| !f.skip)
+        .zip(offsets.iter().copied())
+    {
+        out.push_str(&format!(
+            "  get {}() {{ return {}; }}\n",
+            field.js_name,
+            js_value(
+                &field.ty,
+                &format!("this.offset + {offset}"),
+                "this.document",
+                schema,
+                false,
+            )?
+        ));
+    }
+    out.push_str("  static readObject(document, offset) {\n    return {\n");
     for (field, (offset, _)) in record.fields.iter().filter(|f| !f.skip).zip(offsets) {
         out.push_str(&format!(
-            "  get {}() {{ {} }}\n",
+            "      {}: {},\n",
             field.js_name,
-            js_read(&field.ty, offset, schema)?
+            js_value(
+                &field.ty,
+                &format!("offset + {offset}"),
+                "document",
+                schema,
+                true,
+            )?
         ));
     }
-    out.push_str("  toObject() {\n    return {\n");
-    for field in record.fields.iter().filter(|f| !f.skip) {
-        let suffix = match &field.ty {
-            Type::List { .. } => ".toArray()",
-            Type::Named { name } if schema.records.contains_key(name) => ".toObject()",
-            Type::Option { item } if matches!(&**item, Type::Named { name } if schema.records.contains_key(name)) => {
-                "?.toObject()"
-            }
-            _ => "",
-        };
-        out.push_str(&format!(
-            "      {}: this.{}{},\n",
-            field.js_name, field.js_name, suffix
-        ));
-    }
-    out.push_str("    };\n  }\n}\n\n");
+    out.push_str(&format!(
+        "    }};\n  }}\n  toObject() {{ return {}View.readObject(this.document, this.offset); }}\n}}\n\n",
+        record.name
+    ));
     Ok(())
 }
 
-fn js_read(ty: &Type, offset: usize, schema: &Schema) -> Result<String> {
-    let absolute = format!("this.offset + {offset}");
+fn js_value(
+    ty: &Type,
+    absolute: &str,
+    document: &str,
+    schema: &Schema,
+    object: bool,
+) -> Result<String> {
     Ok(match ty {
-        Type::Bool => format!("return this.document.u8({absolute}) !== 0;"),
-        Type::U8 => format!("return this.document.u8({absolute});"),
-        Type::I8 => format!("return this.document.i8({absolute});"),
-        Type::U16 => format!("return this.document.u16({absolute});"),
-        Type::I16 => format!("return this.document.i16({absolute});"),
-        Type::U32 => format!("return this.document.u32({absolute});"),
-        Type::I32 => format!("return this.document.i32({absolute});"),
-        Type::U64 => format!("return this.document.u64({absolute});"),
-        Type::I64 => format!("return this.document.i64({absolute});"),
-        Type::F32 => format!("return this.document.f32({absolute});"),
-        Type::F64 => format!("return this.document.f64({absolute});"),
-        Type::String { .. } => {
-            format!("return this.document.string(this.document.u32({absolute}));")
+        Type::Bool => format!("{document}.u8({absolute}) !== 0"),
+        Type::U8 => format!("{document}.u8({absolute})"),
+        Type::I8 => format!("{document}.i8({absolute})"),
+        Type::U16 => format!("{document}.u16({absolute})"),
+        Type::I16 => format!("{document}.i16({absolute})"),
+        Type::U32 => format!("{document}.u32({absolute})"),
+        Type::I32 => format!("{document}.i32({absolute})"),
+        Type::U64 => format!("{document}.u64({absolute})"),
+        Type::I64 => format!("{document}.i64({absolute})"),
+        Type::F32 => format!("{document}.f32({absolute})"),
+        Type::F64 => format!("{document}.f64({absolute})"),
+        Type::String { direct: true, .. } => format!("{document}.directString({absolute})"),
+        Type::String { direct: false, .. } => {
+            format!("{document}.string({document}.u32({absolute}))")
         }
         Type::List { item } => {
             let Type::Named { name } = &**item else {
@@ -231,10 +253,17 @@ fn js_read(ty: &Type, offset: usize, schema: &Schema) -> Result<String> {
                 .get(name)
                 .ok_or_else(|| format!("unknown list record {name}"))?;
             let layout = record_layout(record, schema, &mut vec![name.clone()])?;
-            format!(
-                "return new {}ListView(this.document, this.document.u32({absolute}), {});",
-                name, layout.size
-            )
+            if object {
+                format!(
+                    "{}ListView.readObjects({document}, {document}.u32({absolute}), {})",
+                    name, layout.size
+                )
+            } else {
+                format!(
+                    "new {}ListView({document}, {document}.u32({absolute}), {})",
+                    name, layout.size
+                )
+            }
         }
         Type::Named { name } if schema.enums.contains_key(name) => {
             let repr = schema.enums[name].repr.as_deref().unwrap_or("u8");
@@ -243,18 +272,23 @@ fn js_read(ty: &Type, offset: usize, schema: &Schema) -> Result<String> {
             } else {
                 repr.into()
             };
-            format!("return this.document.{method}({absolute});")
+            format!("{document}.{method}({absolute})")
         }
-        Type::Named { name } => format!("return new {name}View(this.document, {absolute});"),
+        Type::Named { name } if object => {
+            format!("{name}View.readObject({document}, {absolute})")
+        }
+        Type::Named { name } => format!("new {name}View({document}, {absolute})"),
         Type::Option { item } => {
             let layout = type_layout(item, schema, &mut vec![])?;
             let inner_offset = align_up(1, layout.align);
-            let mut inner = js_read(item, offset + inner_offset, schema)?;
-            inner = inner
-                .trim_start_matches("return ")
-                .trim_end_matches(';')
-                .to_string();
-            format!("return this.document.u8({absolute}) === 0 ? undefined : ({inner});")
+            let inner = js_value(
+                item,
+                &format!("({absolute} + {inner_offset})"),
+                document,
+                schema,
+                object,
+            )?;
+            format!("{document}.u8({absolute}) === 0 ? undefined : ({inner})")
         }
     })
 }
@@ -262,8 +296,8 @@ fn js_read(ty: &Type, offset: usize, schema: &Schema) -> Result<String> {
 fn emit_js_list(out: &mut String, record: &SchemaFragment, schema: &Schema) -> Result<()> {
     let layout = record_layout(record, schema, &mut vec![record.name.clone()])?;
     out.push_str(&format!(
-        "export class {}ListView extends ZctfFixedListView {{\n  constructor(document, offset, stride = {}) {{\n    super(document, offset, stride, (doc, itemOffset) => new {}View(doc, itemOffset));\n  }}\n}}\n\n",
-        record.name, layout.size, record.name));
+        "export class {}ListView extends ZctfFixedListView {{\n  constructor(document, offset, stride = {}) {{\n    super(document, offset, stride, (doc, itemOffset) => new {}View(doc, itemOffset));\n  }}\n  static readObjects(document, offset, stride = {}) {{\n    const length = document.u32(offset);\n    if (document.u32(offset + 4) !== stride) throw new TypeError(\"unexpected zctf list stride\");\n    const itemsOffset = document.u32(offset + 8);\n    document.slice(itemsOffset, length * stride);\n    const output = new Array(length);\n    for (let index = 0, itemOffset = itemsOffset; index < length; index++, itemOffset += stride) {{\n      output[index] = {}View.readObject(document, itemOffset);\n    }}\n    return output;\n  }}\n  toArray() {{\n    const output = new Array(this._length);\n    for (let index = 0, itemOffset = this.itemsOffset; index < this._length; index++, itemOffset += this.stride) {{\n      output[index] = {}View.readObject(this.document, itemOffset);\n    }}\n    return output;\n  }}\n}}\n\n",
+        record.name, layout.size, record.name, layout.size, record.name, record.name));
     Ok(())
 }
 

@@ -22,7 +22,11 @@ const options = quick
       warmupIterations: 20,
     };
 
-for (const warningCount of [0, 3, 20]) {
+const warningCounts = quick ? [0, 20, 1_000] : [0, 3, 20, 100, 1_000, 10_000];
+
+for (const warningCount of warningCounts) {
+  const prebuilt = zctfMacro(source, warningCount);
+
   describe(`${warningCount} warnings`, () => {
     bench(
       "napi[object] return",
@@ -34,11 +38,23 @@ for (const warningCount of [0, 3, 20]) {
     );
 
     bench(
+      "napi + zctf Buffer return only",
+      () => zctfMacro(source, warningCount).byteLength,
+      options,
+    );
+
+    bench(
       "napi + zctf macro/view",
       () => {
         const value = TransformResultView.from(zctfMacro(source, warningCount));
         return value.code.length + value.warnings.length;
       },
+      options,
+    );
+
+    bench(
+      "zctf View.from prebuilt Buffer",
+      () => TransformResultView.from(prebuilt).offset,
       options,
     );
 

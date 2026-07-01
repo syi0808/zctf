@@ -29,10 +29,10 @@ cargo run -p zctf-cli -- codegen \
 `--check`는 committed generated output drift를 검증한다. 완전히 실행 가능한
 N-API object 비교 예제는 [bench/README.md](bench/README.md)에 있다.
 
-1차 구현에서는 `string(direct)`를 artifact policy로 보존하되 두 string policy를
-동일한 string-table wire representation으로 encode한다. 이 결정은 field별
-wire layout을 하나로 유지하며, direct offset/length encoding은 후속 format
-version에서 추가할 수 있게 한다.
+`string(direct)`는 record에 absolute offset/byte-length를 기록해 string table
+lookup을 생략한다. 일반 `String`은 deduplication과 schema-neutral access를 위한
+StringId layout을 유지한다. `encode_owned()`는 먼저 정확한 document 크기를
+측정한 뒤 최종 `Vec<u8>` 하나에 직접 encode한다.
 
 Rust ↔ JavaScript 사이에서 little-endian binary document를 검증하고 lazy view로
 사용하기 위한 라이브러리와, 원래 PoC의 성능 가설을 재현하는 benchmark fixture다.

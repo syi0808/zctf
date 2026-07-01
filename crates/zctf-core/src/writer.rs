@@ -399,8 +399,7 @@ impl ZctfWriter {
     pub fn set_string(&mut self, offset: usize, value: &str) -> Result<()> {
         match self.mode {
             WriterMode::Measuring => {
-                let id =
-                    u32::try_from(self.measured_string_count).map_err(|_| Error::Overflow)?;
+                let id = u32::try_from(self.measured_string_count).map_err(|_| Error::Overflow)?;
                 self.measured_string_count += 1;
                 self.measured_string_bytes = self
                     .measured_string_bytes
@@ -428,9 +427,9 @@ impl ZctfWriter {
                 Ok(())
             }
             WriterMode::Buffered => {
-                let id =
-                    u32::try_from(self.string_entries.len()).map_err(|_| Error::Overflow)?;
-                let relative = u32::try_from(self.string_heap.len()).map_err(|_| Error::Overflow)?;
+                let id = u32::try_from(self.string_entries.len()).map_err(|_| Error::Overflow)?;
+                let relative =
+                    u32::try_from(self.string_heap.len()).map_err(|_| Error::Overflow)?;
                 let len = u32::try_from(value.len()).map_err(|_| Error::Overflow)?;
                 self.string_entries.push(StringEntry {
                     offset: relative,
@@ -470,7 +469,8 @@ impl ZctfWriter {
                 Ok(())
             }
             WriterMode::Buffered => {
-                let relative = u32::try_from(self.string_heap.len()).map_err(|_| Error::Overflow)?;
+                let relative =
+                    u32::try_from(self.string_heap.len()).map_err(|_| Error::Overflow)?;
                 let len = u32::try_from(value.len()).map_err(|_| Error::Overflow)?;
                 self.string_heap.extend_from_slice(value.as_bytes());
                 self.direct_patches.push(DirectPatch {
@@ -707,11 +707,14 @@ mod tests {
     }
     #[test]
     fn writes_product_document() {
-        let bytes = encode_owned(&Foo {
+        let value = Foo {
             name: "hello".into(),
             size: 3,
-        })
-        .unwrap();
+        };
+        let bytes = encode_owned(&value).unwrap();
+        let mut buffered = ZctfWriter::new();
+        value.encode_zctf(&mut buffered).unwrap();
+        assert_eq!(bytes, buffered.finish().unwrap());
         assert_eq!(&bytes[..4], b"ZCTF");
         assert_eq!(crate::read_u64(&bytes, 8).unwrap(), 7);
         assert_eq!(crate::read_u32(&bytes, 32).unwrap() as usize, bytes.len());
@@ -724,5 +727,35 @@ mod tests {
             validate_zctf(&corrupt, 7, 1),
             Err(Error::InvalidSchema { .. })
         ));
+    }
+
+    struct DirectFoo {
+        name: String,
+    }
+    impl ZctfDocument for DirectFoo {
+        const SCHEMA_ID: u64 = 8;
+        const LAYOUT_VERSION: u32 = 1;
+        fn encode_zctf(&self, writer: &mut ZctfWriter) -> Result<()> {
+            let root = writer.begin_document(Self::SCHEMA_ID, 1, 8)?;
+            writer.set_direct_string(root, &self.name)
+        }
+    }
+
+    #[test]
+    fn planned_and_buffered_direct_strings_match() {
+        let value = DirectFoo {
+            name: "direct".into(),
+        };
+        let planned = encode_owned(&value).unwrap();
+        let mut buffered = ZctfWriter::new();
+        value.encode_zctf(&mut buffered).unwrap();
+        assert_eq!(planned, buffered.finish().unwrap());
+        let root = crate::read_u32(&planned, 20).unwrap() as usize;
+        let table = crate::read_u32(&planned, 24).unwrap();
+        let heap = crate::read_u32(&planned, 28).unwrap();
+        assert_eq!(table, heap);
+        let start = crate::read_u32(&planned, root).unwrap() as usize;
+        let len = crate::read_u32(&planned, root + 4).unwrap() as usize;
+        assert_eq!(&planned[start..start + len], b"direct");
     }
 }

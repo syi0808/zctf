@@ -21,6 +21,41 @@ test("ZctfDocument validates and reads product strings", () => {
   assert.equal(document.string(document.u32(document.rootOffset)), "hello");
 });
 
+test("ZctfDocument validates string entries lazily", () => {
+  const bytes = Buffer.alloc(57);
+  bytes.write("ZCTF");
+  bytes.writeUInt16LE(1, 4);
+  bytes[6] = 1;
+  bytes.writeBigUInt64LE(7n, 8);
+  bytes.writeUInt32LE(1, 16);
+  bytes.writeUInt32LE(40, 20);
+  bytes.writeUInt32LE(44, 24);
+  bytes.writeUInt32LE(52, 28);
+  bytes.writeUInt32LE(57, 32);
+  bytes.writeUInt32LE(100, 44);
+  bytes.writeUInt32LE(5, 48);
+  const document = ZctfDocument.from(bytes, { schemaId: 7n });
+  assert.throws(() => document.string(0), RangeError);
+});
+
+test("ZctfDocument reads direct offset/length strings", () => {
+  const bytes = Buffer.alloc(57);
+  bytes.write("ZCTF");
+  bytes.writeUInt16LE(1, 4);
+  bytes[6] = 1;
+  bytes.writeBigUInt64LE(7n, 8);
+  bytes.writeUInt32LE(1, 16);
+  bytes.writeUInt32LE(40, 20);
+  bytes.writeUInt32LE(52, 24);
+  bytes.writeUInt32LE(52, 28);
+  bytes.writeUInt32LE(57, 32);
+  bytes.writeUInt32LE(52, 40);
+  bytes.writeUInt32LE(5, 44);
+  bytes.write("hello", 52);
+  const document = ZctfDocument.from(bytes, { schemaId: 7n });
+  assert.equal(document.directString(40), "hello");
+});
+
 test("ZctfFixedListView supports iteration helpers", () => {
   const bytes = new Uint8Array(80);
   const view = new DataView(bytes.buffer);

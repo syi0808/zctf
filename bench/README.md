@@ -17,8 +17,13 @@ pnpm --filter zctf-product-benchmark bench
 
 측정에는 Rust 값 생성, N-API transport와 두 접근 패턴이 포함된다.
 
-- `return`: `code`와 list length만 읽는 lazy-access 경로
+- `Buffer return only`: Rust 생성/encode/N-API transport
+- `View.from prebuilt Buffer`: JS header/schema validation 고정 비용
+- `return`: `code`와 list length만 읽는 lazy-access 전체 경로
 - `full traversal` / `toObject`: 모든 warning message까지 materialize하는 경로
+
+정식 측정은 warning 0/3/20/100/1,000/10,000개를 사용한다. quick 측정은
+0/20/1,000개만 실행한다.
 
 Vitest v4의 benchmark runner(Tinybench)가 warmup과 sampling을 수행한다. 정식
 결과는 `results/latest.json`, quick 결과는 `results/latest-quick.json`에
