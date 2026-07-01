@@ -15,6 +15,7 @@
     "test": "cargo test --workspace && node --test packages/*/test/*.test.js",
     "bench": "node --expose-gc packages/bench/src/napi.bench.js",
     "bench:quick": "node --expose-gc packages/bench/src/napi.bench.js --quick --output=/tmp/zctf-napi-quick.json",
+    "bench:string-decode": "node --expose-gc scripts/bench-string-decode.js",
     "bench:bun": "bun packages/bench/src/bun-ffi.bench.js",
     "bench:wasm": "node packages/bench/src/wasm.bench.js"
   },

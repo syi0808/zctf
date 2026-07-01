@@ -1,7 +1,16 @@
 import { MemoryReader } from "./memory.js";
 
-const decoder = new TextDecoder();
+// ZCTF strings preserve every decoded code point, including a leading UTF-8 BOM.
+const decoder = new TextDecoder("utf-8", { ignoreBOM: true });
 const encoder = new TextEncoder();
+
+function decodeBufferUtf8(bytes, offset, length) {
+  return bytes.toString("utf8", offset, offset + length);
+}
+
+function decodeUint8ArrayUtf8(bytes, offset, length) {
+  return decoder.decode(bytes.subarray(offset, offset + length));
+}
 
 export class BinaryDocument extends MemoryReader {
   constructor(bytes, format, { cacheStrings = false } = {}) {
@@ -27,6 +36,10 @@ export class BinaryDocument extends MemoryReader {
         this.view = new DataView(this.bytes.buffer, this.bytes.byteOffset, total);
       }
     }
+    this.decodeUtf8 =
+      typeof Buffer !== "undefined" && Buffer.isBuffer(this.bytes)
+        ? decodeBufferUtf8
+        : decodeUint8ArrayUtf8;
     this.cache = cacheStrings ? new Map() : null;
     this.strings = format.strings ? new MutableStringTable(this, format.strings) : null;
   }
@@ -85,7 +98,7 @@ export class MutableStringTable {
     const cached = this.document.cache?.get(id);
     if (cached !== undefined) return cached;
     const [offset, length] = this.range(id);
-    const value = decoder.decode(this.document.slice(offset, length));
+    const value = this.document.decodeUtf8(this.document.bytes, offset, length);
     this.document.cache?.set(id, value);
     return value;
   }
@@ -94,9 +107,7 @@ export class MutableStringTable {
     const cached = this.document.cache?.get(id);
     if (cached !== undefined) return cached;
     const [offset, length] = this.rangeUnchecked(id);
-    const value = decoder.decode(
-      this.document.bytes.subarray(offset, offset + length),
-    );
+    const value = this.document.decodeUtf8(this.document.bytes, offset, length);
     this.document.cache?.set(id, value);
     return value;
   }

@@ -47,6 +47,26 @@ test("generic document validates and accesses descriptor-defined strings", () =>
   assert.throws(() => document.string(2), /out of bounds/);
 });
 
+test("string decoding supports both Uint8Array and Buffer documents", () => {
+  const bytes = makeDocumentBytes();
+  const encoded = new TextEncoder().encode("한글🙂");
+  new DataView(bytes.buffer).setUint32(68, encoded.length, true);
+  bytes.set(encoded, 80);
+
+  assert.equal(new BinaryDocument(bytes, FORMAT).string(0), "한글🙂");
+  assert.equal(new BinaryDocument(Buffer.from(bytes), FORMAT).string(0), "한글🙂");
+});
+
+test("string decoding preserves a leading UTF-8 BOM", () => {
+  const bytes = makeDocumentBytes();
+  const encoded = new TextEncoder().encode("\uFEFFvalue");
+  new DataView(bytes.buffer).setUint32(68, encoded.length, true);
+  bytes.set(encoded, 80);
+
+  assert.equal(new BinaryDocument(bytes, FORMAT).string(0), "\uFEFFvalue");
+  assert.equal(new BinaryDocument(Buffer.from(bytes), FORMAT).string(0), "\uFEFFvalue");
+});
+
 test("generic fixed list validates stride, capacity, and item bounds", () => {
   const document = new BinaryDocument(makeDocumentBytes(), FORMAT);
   const list = new FixedListView(document, 96, 4, (doc, offset) => ({
