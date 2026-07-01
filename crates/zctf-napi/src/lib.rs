@@ -2,8 +2,13 @@ use napi::bindgen_prelude::*;
 use napi_derive::napi;
 use zctf_bench_fixtures::{
     consume_bench_report as consume_report, consume_compiled_config,
-    consume_compiled_config_repeated, make_bench_report, make_bench_report_compact,
-    make_bench_report_direct_string_ref, make_bench_report_sidecar, make_bench_report_soa,
+    consume_compiled_config_repeated, count_report_name_prefix as count_name_prefix,
+    make_bench_report, make_bench_report_compact, make_bench_report_compact_parallel,
+    make_bench_report_compact_sequential, make_bench_report_direct_string_ref,
+    make_bench_report_direct_string_ref_parallel, make_bench_report_direct_string_ref_sequential,
+    make_bench_report_sidecar, make_bench_report_soa, make_bench_report_soa_parallel,
+    make_bench_report_soa_sequential, sum_report_dependency_counts as sum_dependencies,
+    sum_report_name_byte_lengths as sum_name_byte_lengths, sum_report_sizes as sum_sizes,
 };
 
 #[napi(object)]
@@ -38,13 +43,43 @@ pub fn make_report_buffer_compact(count: u32) -> Buffer {
 }
 
 #[napi]
+pub fn make_report_buffer_compact_sequential(count: u32) -> Buffer {
+    make_bench_report_compact_sequential(count).into()
+}
+
+#[napi]
+pub fn make_report_buffer_compact_parallel(count: u32) -> Buffer {
+    make_bench_report_compact_parallel(count).into()
+}
+
+#[napi]
 pub fn make_report_buffer_direct_string_ref(count: u32) -> Buffer {
     make_bench_report_direct_string_ref(count).into()
 }
 
 #[napi]
+pub fn make_report_buffer_direct_string_ref_sequential(count: u32) -> Buffer {
+    make_bench_report_direct_string_ref_sequential(count).into()
+}
+
+#[napi]
+pub fn make_report_buffer_direct_string_ref_parallel(count: u32) -> Buffer {
+    make_bench_report_direct_string_ref_parallel(count).into()
+}
+
+#[napi]
 pub fn make_report_buffer_soa(count: u32) -> Buffer {
     make_bench_report_soa(count).into()
+}
+
+#[napi]
+pub fn make_report_buffer_soa_sequential(count: u32) -> Buffer {
+    make_bench_report_soa_sequential(count).into()
+}
+
+#[napi]
+pub fn make_report_buffer_soa_parallel(count: u32) -> Buffer {
+    make_bench_report_soa_parallel(count).into()
 }
 
 #[napi]
@@ -99,6 +134,32 @@ pub fn consume_report_buffer(bytes: &[u8]) -> Result<i64> {
     consume_report(bytes)
         .map(|value| value as i64)
         .map_err(Error::from_reason)
+}
+
+#[napi]
+pub fn sum_report_sizes(bytes: &[u8]) -> Result<i64> {
+    sum_sizes(bytes)
+        .map(|value| value as i64)
+        .map_err(Error::from_reason)
+}
+
+#[napi]
+pub fn sum_report_dependency_counts(bytes: &[u8]) -> Result<i64> {
+    sum_dependencies(bytes)
+        .map(|value| value as i64)
+        .map_err(Error::from_reason)
+}
+
+#[napi]
+pub fn sum_report_name_byte_lengths(bytes: &[u8]) -> Result<i64> {
+    sum_name_byte_lengths(bytes)
+        .map(|value| value as i64)
+        .map_err(Error::from_reason)
+}
+
+#[napi]
+pub fn count_report_name_prefix(bytes: &[u8], prefix: String) -> Result<u32> {
+    count_name_prefix(bytes, prefix.as_bytes()).map_err(Error::from_reason)
 }
 
 #[napi(object)]

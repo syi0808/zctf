@@ -28,6 +28,7 @@ const result = {
     quick,
     unit: "milliseconds",
   },
+  reportGeneration: [],
   rustToJs: [],
   configInput: [],
   mutablePipeline: [],
@@ -71,6 +72,44 @@ console.log("Benchmark 1/3: Rust → JS result");
 for (const count of sizes) {
   const repetitions = repetitionsFor(count);
   const row = { count };
+  const generationRepetitions = count >= 100_000 ? 3 : repetitions;
+  result.reportGeneration.push({
+    count,
+    compact: {
+      sequential: measure(
+        () => native.makeReportBufferCompactSequential(count).byteLength,
+        generationRepetitions,
+      ),
+      parallelLocal: measure(
+        () => native.makeReportBufferCompactParallel(count).byteLength,
+        generationRepetitions,
+      ),
+      automatic: measure(
+        () => native.makeReportBufferCompact(count).byteLength,
+        generationRepetitions,
+      ),
+    },
+    directStringRef: {
+      sequential: measure(
+        () => native.makeReportBufferDirectStringRefSequential(count).byteLength,
+        generationRepetitions,
+      ),
+      parallelLocal: measure(
+        () => native.makeReportBufferDirectStringRefParallel(count).byteLength,
+        generationRepetitions,
+      ),
+    },
+    soa: {
+      sequential: measure(
+        () => native.makeReportBufferSoaSequential(count).byteLength,
+        generationRepetitions,
+      ),
+      parallelLocal: measure(
+        () => native.makeReportBufferSoaParallel(count).byteLength,
+        generationRepetitions,
+      ),
+    },
+  });
   row.objectReturn = measure(() => native.makeReportObject(count).packages.length, repetitions);
   row.jsonReturnAndParse = measure(
     () => JSON.parse(native.makeReportJson(count)).packages.length,
@@ -133,6 +172,12 @@ for (const count of sizes) {
     }, repetitions),
     zctfBulk: measure(() => compactView.packages.sumSizes(), repetitions),
     zctfBulkMutable: measure(() => view.packages.sumSizes(), repetitions),
+    zctfNative: measure(() => native.sumReportSizes(compactBuffer), repetitions),
+    jsonParseAndLoop: measure(() => {
+      let sum = 0;
+      for (const item of JSON.parse(json).packages) sum += item.size;
+      return sum;
+    }, repetitions),
   };
   row.names = {
     objectLength: measure(() => {
@@ -156,6 +201,10 @@ for (const count of sizes) {
       () => compactView.packages.sumNameByteLengths(),
       repetitions,
     ),
+    zctfNativeByteLength: measure(
+      () => native.sumReportNameByteLengths(compactBuffer),
+      repetitions,
+    ),
     zctfMaterializeArray: measure(
       () => compactView.packages.materializeNames().length,
       repetitions,
@@ -169,6 +218,17 @@ for (const count of sizes) {
       () => compactView.packages.countNamesWithPrefix("package-9"),
       repetitions,
     ),
+    zctfNativeBytePrefixFilter: measure(
+      () => native.countReportNamePrefix(compactBuffer, "package-9"),
+      repetitions,
+    ),
+    jsonParsePrefixFilter: measure(() => {
+      let matches = 0;
+      for (const item of JSON.parse(json).packages) {
+        if (item.name.startsWith("package-9")) matches++;
+      }
+      return matches;
+    }, repetitions),
   };
   row.cacheStrings = {
     disabled: measure(() => compactView.packages.sumNameDecodeLengths(), repetitions),

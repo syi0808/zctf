@@ -73,6 +73,38 @@ test("compact and experimental report layouts preserve traversal results", () =>
   assert.deepEqual(direct.materializeNames(), aos.packages.materializeNames());
 });
 
+test("parallel report generation and native aggregates preserve results", () => {
+  const count = 1_001;
+  assert.deepEqual(
+    native.makeReportBufferCompactParallel(count),
+    native.makeReportBufferCompactSequential(count),
+  );
+  assert.deepEqual(
+    native.makeReportBufferDirectStringRefParallel(count),
+    native.makeReportBufferDirectStringRefSequential(count),
+  );
+  assert.deepEqual(
+    native.makeReportBufferSoaParallel(count),
+    native.makeReportBufferSoaSequential(count),
+  );
+
+  const bytes = native.makeReportBufferCompact(count);
+  const report = BenchReportView.from(bytes);
+  assert.equal(native.sumReportSizes(bytes), report.packages.sumSizes());
+  assert.equal(
+    native.sumReportDependencyCounts(bytes),
+    report.packages.sumDependencyCounts(),
+  );
+  assert.equal(
+    native.sumReportNameByteLengths(bytes),
+    report.packages.sumNameByteLengths(),
+  );
+  assert.equal(
+    native.countReportNamePrefix(bytes, "package-9"),
+    report.packages.countNamesWithPrefix("package-9"),
+  );
+});
+
 test("compiled config is consumed and cached by native code", () => {
   const config = createConfigFixture("medium");
   const compiled = compileConfig(config);

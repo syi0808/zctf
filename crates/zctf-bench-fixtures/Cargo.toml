@@ -6,4 +6,5 @@ license.workspace = true
 publish = false
 
 [dependencies]
+rayon = "1.11"
 zctf-core = { path = "../zctf-core" }
