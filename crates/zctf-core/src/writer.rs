@@ -126,6 +126,12 @@ pub const fn align_up(value: usize, alignment: usize) -> usize {
 pub trait ZctfDocument {
     const SCHEMA_ID: u64;
     const LAYOUT_VERSION: u32;
+
+    /// Encodes the same document deterministically on every invocation.
+    ///
+    /// [`encode_owned`] invokes this method once to measure the exact layout and
+    /// once to write into the final allocation. Implementations must not consume
+    /// external state or produce different field/list/string counts between passes.
     fn encode_zctf(&self, writer: &mut ZctfWriter) -> Result<()>;
 }
 

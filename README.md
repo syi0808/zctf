@@ -30,9 +30,10 @@ cargo run -p zctf-cli -- codegen \
 N-API object 비교 예제는 [bench/README.md](bench/README.md)에 있다.
 
 `string(direct)`는 record에 absolute offset/byte-length를 기록해 string table
-lookup을 생략한다. 일반 `String`은 deduplication과 schema-neutral access를 위한
+lookup을 생략한다. 일반 `String`은 간접 참조와 schema-neutral access를 위한
 StringId layout을 유지한다. `encode_owned()`는 먼저 정확한 document 크기를
-측정한 뒤 최종 `Vec<u8>` 하나에 직접 encode한다.
+측정한 뒤 최종 `Vec<u8>` 하나에 직접 encode한다. 직접 `ZctfDocument`를 구현할
+경우 `encode_zctf()`는 두 pass에서 동일한 layout을 생성하는 순수한 함수여야 한다.
 
 Rust ↔ JavaScript 사이에서 little-endian binary document를 검증하고 lazy view로
 사용하기 위한 라이브러리와, 원래 PoC의 성능 가설을 재현하는 benchmark fixture다.
