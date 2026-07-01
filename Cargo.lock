@@ -480,6 +480,22 @@ dependencies = [
  "napi-derive",
  "zctf",
  "zctf-napi",
+ "zctf-product-bench-model",
+]
+
+[[package]]
+name = "zctf-product-bench-model"
+version = "0.1.0"
+dependencies = [
+ "zctf",
+]
+
+[[package]]
+name = "zctf-product-bench-wasm"
+version = "0.1.0"
+dependencies = [
+ "zctf",
+ "zctf-product-bench-model",
 ]
 
 [[package]]

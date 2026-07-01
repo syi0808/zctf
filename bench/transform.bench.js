@@ -5,6 +5,7 @@ import {
   transformZctfManual as zctfManual,
 } from "./native.js";
 import { TransformResultView } from "./generated/transform-result.view.js";
+import { transformZctfWasm } from "./wasm-runtime.js";
 
 const source = "<svg viewBox='0 0 24 24'><path d='M0 0h24v24H0z'/></svg>";
 const quick = process.env.ZCTF_BENCH_QUICK === "1";
@@ -68,6 +69,20 @@ for (const warningCount of warningCounts) {
     );
 
     bench(
+      "wasm + zctf macro/view",
+      () => {
+        const output = transformZctfWasm(source, warningCount);
+        try {
+          const value = TransformResultView.from(output.bytes);
+          return value.code.length + value.warnings.length;
+        } finally {
+          output.free();
+        }
+      },
+      options,
+    );
+
+    bench(
       "napi[object] full traversal",
       () => {
         const value = napiObject(source, warningCount);
@@ -92,6 +107,26 @@ for (const warningCount of warningCounts) {
       },
       options,
     );
+
+    bench(
+      "wasm + zctf toObject",
+      () => {
+        const output = transformZctfWasm(source, warningCount);
+        try {
+          const value = TransformResultView.from(output.bytes).toObject();
+          return (
+            value.code.length +
+            value.warnings.reduce(
+              (sum, warning) => sum + warning.message.length,
+              0,
+            )
+          );
+        } finally {
+          output.free();
+        }
+      },
+      options,
+    );
   });
 
   describe(`${warningCount} warnings - stage breakdown`, () => {
@@ -104,6 +139,19 @@ for (const warningCount of warningCounts) {
     bench(
       "zctf View.from prebuilt Buffer",
       () => TransformResultView.from(prebuilt).offset,
+      options,
+    );
+
+    bench(
+      "wasm + zctf bytes return only",
+      () => {
+        const output = transformZctfWasm(source, warningCount);
+        try {
+          return output.bytes.byteLength;
+        } finally {
+          output.free();
+        }
+      },
       options,
     );
   });

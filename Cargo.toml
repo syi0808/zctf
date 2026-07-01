@@ -14,7 +14,9 @@ members = [
   "crates/zctf-napi",
   "crates/zctf-ffi",
   "crates/zctf-wasm",
+  "bench/model",
   "bench/rust",
+  "bench/wasm",
 ]
 resolver = "2"
 

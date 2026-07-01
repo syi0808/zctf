@@ -1,28 +1,7 @@
 use napi_derive::napi;
-
-#[zctf::enum_repr(u8)]
-pub enum WarningLevel {
-    Info,
-    Warn,
-    Error,
-}
-
-#[zctf::record]
-pub struct Warning {
-    pub level: WarningLevel,
-    #[zctf(string(direct, encoding = "utf8"))]
-    pub message: String,
-    pub start: u32,
-    pub end: u32,
-}
-
-#[zctf::document]
-pub struct TransformResult {
-    #[zctf(string(direct, encoding = "utf8"))]
-    pub code: String,
-    pub duration_ms: f64,
-    pub warnings: Vec<Warning>,
-}
+use zctf_product_bench_model::{
+    TransformResult, transform_code, transform_result, warning_message,
+};
 
 #[napi(object)]
 pub struct WarningObject {
@@ -39,40 +18,19 @@ pub struct TransformObject {
     pub warnings: Vec<WarningObject>,
 }
 
-fn warning(index: u32) -> Warning {
-    Warning {
-        level: match index % 3 {
-            0 => WarningLevel::Info,
-            1 => WarningLevel::Warn,
-            _ => WarningLevel::Error,
-        },
-        message: format!("warning-{index}: generated benchmark diagnostic"),
-        start: index * 10,
-        end: index * 10 + 5,
-    }
-}
-
 fn warning_object(index: u32) -> WarningObject {
     WarningObject {
         level: (index % 3) as u8,
-        message: format!("warning-{index}: generated benchmark diagnostic"),
+        message: warning_message(index),
         start: index * 10,
         end: index * 10 + 5,
-    }
-}
-
-fn result(source: &str, warning_count: u32) -> TransformResult {
-    TransformResult {
-        code: format!("export default function Icon() {{ return {:?}; }}", source),
-        duration_ms: 1.25,
-        warnings: (0..warning_count).map(warning).collect(),
     }
 }
 
 #[napi]
 pub fn transform_object(source: String, warning_count: u32) -> TransformObject {
     TransformObject {
-        code: format!("export default function Icon() {{ return {:?}; }}", source),
+        code: transform_code(&source),
         duration_ms: 1.25,
         warnings: (0..warning_count).map(warning_object).collect(),
     }
@@ -80,7 +38,7 @@ pub fn transform_object(source: String, warning_count: u32) -> TransformObject {
 
 #[zctf_napi::export(name = "transformZctf", return = "buffer")]
 pub fn transform_zctf_document(source: String, warning_count: u32) -> TransformResult {
-    result(&source, warning_count)
+    transform_result(&source, warning_count)
 }
 
 #[napi]
@@ -88,7 +46,7 @@ pub fn transform_zctf_manual(
     source: String,
     warning_count: u32,
 ) -> napi::Result<napi::bindgen_prelude::Buffer> {
-    let value = result(&source, warning_count);
+    let value = transform_result(&source, warning_count);
     let mut writer =
         zctf::ZctfWriter::with_capacity(value.code.len() + warning_count as usize * 64);
     let root = writer

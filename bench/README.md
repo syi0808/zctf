@@ -7,6 +7,8 @@
 - `transformZctf`: `#[zctf::document]`가 binary document를 encode하고 generated
   lazy view로 읽음
 - `transformZctfManual`: 동일한 wire format을 manual writer로 encode
+- `transformZctfWasm`: UTF-8 input을 WASM linear memory로 복사하고 동일한
+  Rust model/encoder로 document를 생성한 뒤 explicit free
 
 ```bash
 pnpm --filter zctf-product-benchmark build
@@ -18,6 +20,7 @@ pnpm --filter zctf-product-benchmark bench
 측정에는 Rust 값 생성, N-API transport와 두 접근 패턴이 포함된다.
 
 - `Buffer return only`: Rust 생성/encode/N-API transport
+- `WASM bytes return only`: input copy, Rust/WASM encode, linear-memory handle, free
 - `View.from prebuilt Buffer`: JS header/schema validation 고정 비용
 - `return`: `code`와 list length만 읽는 lazy-access 전체 경로
 - `full traversal` / `toObject`: 모든 warning message까지 materialize하는 경로
