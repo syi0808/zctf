@@ -42,6 +42,9 @@ npm pack --dry-run --workspace @zctf/transform-config
 cargo package -p zctf-core --allow-dirty
 ```
 
-기존 PoC 결과와 해석은 [docs/BENCHMARKS.md](docs/BENCHMARKS.md), layout은
+벤치마크 케이스와 판정 기준은
+[docs/BENCHMARK_CASES.md](docs/BENCHMARK_CASES.md), 기존 PoC 결과와 해석은
+[docs/BENCHMARKS.md](docs/BENCHMARKS.md)에 있다. layout은
 [docs/MEMORY_LAYOUT.md](docs/MEMORY_LAYOUT.md), 구현 범위는
-[docs/DESIGN.md](docs/DESIGN.md)에 있다. 원시 결과는 `benchmark-results/*.json`이다.
+[docs/DESIGN.md](docs/DESIGN.md)에 있으며 원시 결과는
+`benchmark-results/*.json`이다.
