@@ -8,12 +8,36 @@ export class MemoryReader {
     return this.view.getUint8(offset);
   }
 
+  i8(offset) {
+    return this.view.getInt8(offset);
+  }
+
+  u16(offset) {
+    return this.view.getUint16(offset, true);
+  }
+
+  i16(offset) {
+    return this.view.getInt16(offset, true);
+  }
+
   u32(offset) {
     return this.view.getUint32(offset, true);
   }
 
+  i32(offset) {
+    return this.view.getInt32(offset, true);
+  }
+
   u64(offset) {
     return this.view.getBigUint64(offset, true);
+  }
+
+  i64(offset) {
+    return this.view.getBigInt64(offset, true);
+  }
+
+  f32(offset) {
+    return this.view.getFloat32(offset, true);
   }
 
   f64(offset) {

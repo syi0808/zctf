@@ -1,0 +1,9 @@
+[package]
+name = "zctf-codegen"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Rust, JavaScript and TypeScript generators for zctf schemas"
+
+[dependencies]
+zctf-schema = { path = "../zctf-schema" }

@@ -4,7 +4,8 @@
   "type": "module",
   "workspaces": [
     "packages/runtime",
-    "packages/config"
+    "packages/config",
+    "bench"
   ],
   "scripts": {
     "generate": "node scripts/generate.js schemas/zctf.schema.json packages/bench/fixtures/bench-report.schema.json",
@@ -14,6 +15,9 @@
     "build": "npm run build:napi && npm run build:ffi && npm run build:wasm",
     "test": "cargo test --workspace && node --test packages/*/test/*.test.js",
     "bench": "node --expose-gc packages/bench/src/napi.bench.js",
+    "product:build": "pnpm --filter zctf-product-benchmark build",
+    "product:test": "pnpm --filter zctf-product-benchmark test",
+    "product:bench": "pnpm --filter zctf-product-benchmark bench:quick",
     "bench:quick": "node --expose-gc packages/bench/src/napi.bench.js --quick --output=/tmp/zctf-napi-quick.json",
     "bench:string-decode": "node --expose-gc scripts/bench-string-decode.js",
     "bench:bun": "bun packages/bench/src/bun-ffi.bench.js",

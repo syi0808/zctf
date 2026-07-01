@@ -1,0 +1,9 @@
+[package]
+name = "zctf-ffi"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Owned C ABI transport adapter for zctf"
+
+[dependencies]
+zctf = { path = "../zctf" }

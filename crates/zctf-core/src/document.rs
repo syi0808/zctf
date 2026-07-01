@@ -13,6 +13,9 @@ pub enum Error {
     InvalidList,
     InvalidStringTable,
     InvalidUtf8,
+    InvalidSchema { expected: u64, actual: u64 },
+    InvalidLayoutVersion { expected: u32, actual: u32 },
+    UnsupportedEndian(u8),
 }
 
 impl fmt::Display for Error {
@@ -36,6 +39,21 @@ impl fmt::Display for Error {
             Self::InvalidList => formatter.write_str("invalid fixed list"),
             Self::InvalidStringTable => formatter.write_str("invalid string table"),
             Self::InvalidUtf8 => formatter.write_str("string is not valid UTF-8"),
+            Self::InvalidSchema { expected, actual } => {
+                write!(
+                    formatter,
+                    "invalid schema 0x{actual:016x}; expected 0x{expected:016x}"
+                )
+            }
+            Self::InvalidLayoutVersion { expected, actual } => {
+                write!(
+                    formatter,
+                    "invalid layout version {actual}; expected {expected}"
+                )
+            }
+            Self::UnsupportedEndian(endian) => {
+                write!(formatter, "unsupported endian marker {endian}")
+            }
         }
     }
 }

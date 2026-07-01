@@ -1,10 +1,20 @@
 [workspace]
 members = [
+  "crates/zctf",
   "crates/zctf-core",
+  "crates/zctf-schema",
+  "crates/zctf-macros",
+  "crates/zctf-codegen",
+  "crates/zctf-cli",
+  "crates/zctf-napi-adapter",
+  "crates/zctf-napi-macros",
+  "crates/zctf-wasm-adapter",
+  "crates/zctf-ffi-adapter",
   "crates/zctf-bench-fixtures",
   "crates/zctf-napi",
   "crates/zctf-ffi",
   "crates/zctf-wasm",
+  "bench/rust",
 ]
 resolver = "2"
 

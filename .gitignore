@@ -1,3 +1,7 @@
 target/
 node_modules/
 native/
+bench/*.node
+bench/index.js
+bench/index.d.ts
+bench/results/latest-quick.json

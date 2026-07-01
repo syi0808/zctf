@@ -1,0 +1,45 @@
+{
+  "zctf": "1",
+  "name": "Warning",
+  "kind": "record",
+  "layoutVersion": 1,
+  "fields": [
+    {
+      "rustName": "level",
+      "jsName": "level",
+      "type": {
+        "kind": "named",
+        "name": "WarningLevel"
+      },
+      "skip": false
+    },
+    {
+      "rustName": "message",
+      "jsName": "message",
+      "type": {
+        "kind": "string",
+        "encoding": "utf8",
+        "direct": false
+      },
+      "skip": false
+    },
+    {
+      "rustName": "start",
+      "jsName": "start",
+      "type": {
+        "kind": "u32"
+      },
+      "skip": false
+    },
+    {
+      "rustName": "end",
+      "jsName": "end",
+      "type": {
+        "kind": "u32"
+      },
+      "skip": false
+    }
+  ],
+  "repr": null,
+  "variants": []
+}

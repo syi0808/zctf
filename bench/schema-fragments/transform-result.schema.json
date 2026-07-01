@@ -1,0 +1,40 @@
+{
+  "zctf": "1",
+  "name": "TransformResult",
+  "kind": "document",
+  "layoutVersion": 1,
+  "fields": [
+    {
+      "rustName": "code",
+      "jsName": "code",
+      "type": {
+        "kind": "string",
+        "encoding": "utf8",
+        "direct": true
+      },
+      "skip": false
+    },
+    {
+      "rustName": "duration_ms",
+      "jsName": "durationMs",
+      "type": {
+        "kind": "f64"
+      },
+      "skip": false
+    },
+    {
+      "rustName": "warnings",
+      "jsName": "warnings",
+      "type": {
+        "kind": "list",
+        "item": {
+          "kind": "named",
+          "name": "Warning"
+        }
+      },
+      "skip": false
+    }
+  ],
+  "repr": null,
+  "variants": []
+}

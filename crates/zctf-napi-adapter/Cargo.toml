@@ -1,0 +1,11 @@
+[package]
+name = "zctf-napi"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "N-API Buffer transport adapter for zctf"
+
+[dependencies]
+napi = { version = "3", features = ["napi8"] }
+zctf = { path = "../zctf" }
+zctf-napi-macros = { path = "../zctf-napi-macros" }

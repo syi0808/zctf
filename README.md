@@ -1,5 +1,39 @@
 # zctf
 
+## 1차 제품 SDK
+
+새 제품 경로는 Rust 타입에서 schema fragment, binary encoder, generated JS view와
+TypeScript declaration을 만든다.
+
+```rust
+#[zctf::document]
+struct Foo {
+    name: String,
+    size: u32,
+}
+
+let bytes = zctf::encode_owned(&Foo { name: "demo".into(), size: 3 })?;
+```
+
+`ZCTF_SCHEMA_OUT_DIR`를 설정해 Rust build가 schema fragment를 출력하게 한 뒤
+codegen을 실행한다.
+
+```bash
+ZCTF_SCHEMA_OUT_DIR=target/zctf cargo build
+cargo run -p zctf-cli -- codegen \
+  --schema target/zctf \
+  --out generated \
+  --emit js,ts,rust
+```
+
+`--check`는 committed generated output drift를 검증한다. 완전히 실행 가능한
+N-API object 비교 예제는 [bench/README.md](bench/README.md)에 있다.
+
+1차 구현에서는 `string(direct)`를 artifact policy로 보존하되 두 string policy를
+동일한 string-table wire representation으로 encode한다. 이 결정은 field별
+wire layout을 하나로 유지하며, direct offset/length encoding은 후속 format
+version에서 추가할 수 있게 한다.
+
 Rust ↔ JavaScript 사이에서 little-endian binary document를 검증하고 lazy view로
 사용하기 위한 라이브러리와, 원래 PoC의 성능 가설을 재현하는 benchmark fixture다.
 

@@ -149,6 +149,12 @@ dependencies = [
 ]
 
 [[package]]
+name = "glob"
+version = "0.3.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0cc23270f6e1808e30a928bdc84dea0b9b4136a8bc82338574f23baf47bbd280"
+
+[[package]]
 name = "itoa"
 version = "1.0.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -296,6 +302,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9a8e94ea7f378bd32cbbd37198a4a91436180c5bb472411e48b5ec2e2124ae9e"
 dependencies = [
  "serde_core",
+ "serde_derive",
 ]
 
 [[package]]
@@ -367,6 +374,14 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f0805222e57f7521d6a62e36fa9163bc891acd422f971defe97d64e70d0a4fe5"
 
 [[package]]
+name = "zctf"
+version = "0.1.0"
+dependencies = [
+ "zctf-core",
+ "zctf-macros",
+]
+
+[[package]]
 name = "zctf-bench-ffi"
 version = "0.1.0"
 dependencies = [
@@ -400,8 +415,87 @@ dependencies = [
 ]
 
 [[package]]
+name = "zctf-cli"
+version = "0.1.0"
+dependencies = [
+ "glob",
+ "serde_json",
+ "zctf-codegen",
+ "zctf-schema",
+]
+
+[[package]]
+name = "zctf-codegen"
+version = "0.1.0"
+dependencies = [
+ "zctf-schema",
+]
+
+[[package]]
 name = "zctf-core"
 version = "0.1.0"
+
+[[package]]
+name = "zctf-ffi"
+version = "0.1.0"
+dependencies = [
+ "zctf",
+]
+
+[[package]]
+name = "zctf-macros"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "serde_json",
+ "syn",
+ "zctf-schema",
+]
+
+[[package]]
+name = "zctf-napi"
+version = "0.1.0"
+dependencies = [
+ "napi",
+ "zctf",
+ "zctf-napi-macros",
+]
+
+[[package]]
+name = "zctf-napi-macros"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
+
+[[package]]
+name = "zctf-product-bench"
+version = "0.1.0"
+dependencies = [
+ "napi",
+ "napi-build",
+ "napi-derive",
+ "zctf",
+ "zctf-napi",
+]
+
+[[package]]
+name = "zctf-schema"
+version = "0.1.0"
+dependencies = [
+ "serde",
+ "serde_json",
+]
+
+[[package]]
+name = "zctf-wasm"
+version = "0.1.0"
+dependencies = [
+ "zctf",
+]
 
 [[package]]
 name = "zmij"

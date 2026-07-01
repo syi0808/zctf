@@ -1,0 +1,18 @@
+[package]
+name = "zctf-product-bench"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+publish = false
+
+[lib]
+crate-type = ["cdylib"]
+
+[dependencies]
+napi = { version = "3", features = ["napi8"] }
+napi-derive = "3"
+zctf = { path = "../../crates/zctf" }
+zctf-napi = { path = "../../crates/zctf-napi-adapter" }
+
+[build-dependencies]
+napi-build = "2"

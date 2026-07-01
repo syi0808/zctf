@@ -1,0 +1,22 @@
+{
+  "zctf": "1",
+  "name": "WarningLevel",
+  "kind": "enum",
+  "layoutVersion": 1,
+  "fields": [],
+  "repr": "u8",
+  "variants": [
+    {
+      "name": "Info",
+      "value": 0
+    },
+    {
+      "name": "Warn",
+      "value": 1
+    },
+    {
+      "name": "Error",
+      "value": 2
+    }
+  ]
+}

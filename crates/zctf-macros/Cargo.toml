@@ -1,0 +1,16 @@
+[package]
+name = "zctf-macros"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Procedural macros for zctf documents"
+
+[lib]
+proc-macro = true
+
+[dependencies]
+proc-macro2 = "1"
+quote = "1"
+syn = { version = "2", features = ["full", "extra-traits"] }
+serde_json = "1"
+zctf-schema = { path = "../zctf-schema" }

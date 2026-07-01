@@ -1,0 +1,9 @@
+[package]
+name = "zctf-wasm"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+description = "Owned WebAssembly memory transport adapter for zctf"
+
+[dependencies]
+zctf = { path = "../zctf" }

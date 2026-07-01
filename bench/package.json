@@ -1,0 +1,18 @@
+{
+  "name": "zctf-product-benchmark",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "schema": "cargo build -p zctf-product-bench",
+    "codegen": "cargo run -p zctf-cli -- codegen --schema schema-fragments --out generated --emit js,ts,rust --runtime-import ../../packages/runtime/src/index.js",
+    "build:native": "napi build --platform --release --manifest-path rust/Cargo.toml --output-dir .",
+    "build": "pnpm schema && pnpm codegen && pnpm build:native",
+    "test": "vitest run",
+    "bench": "vitest bench --outputJson results/latest.json",
+    "bench:quick": "ZCTF_BENCH_QUICK=1 vitest bench --outputJson results/latest-quick.json"
+  },
+  "devDependencies": {
+    "@napi-rs/cli": "^3.0.0",
+    "vitest": "4.1.9"
+  }
+}

@@ -1,0 +1,118 @@
+{
+  "zctf": "1",
+  "name": "TransformResult",
+  "schemaId": "0x51c6b8376a1dc7ac",
+  "layoutVersion": 1,
+  "root": "TransformResult",
+  "records": {
+    "TransformResult": {
+      "zctf": "1",
+      "name": "TransformResult",
+      "kind": "document",
+      "layoutVersion": 1,
+      "fields": [
+        {
+          "rustName": "code",
+          "jsName": "code",
+          "type": {
+            "kind": "string",
+            "encoding": "utf8",
+            "direct": true
+          },
+          "skip": false
+        },
+        {
+          "rustName": "duration_ms",
+          "jsName": "durationMs",
+          "type": {
+            "kind": "f64"
+          },
+          "skip": false
+        },
+        {
+          "rustName": "warnings",
+          "jsName": "warnings",
+          "type": {
+            "kind": "list",
+            "item": {
+              "kind": "named",
+              "name": "Warning"
+            }
+          },
+          "skip": false
+        }
+      ],
+      "repr": null,
+      "variants": []
+    },
+    "Warning": {
+      "zctf": "1",
+      "name": "Warning",
+      "kind": "record",
+      "layoutVersion": 1,
+      "fields": [
+        {
+          "rustName": "level",
+          "jsName": "level",
+          "type": {
+            "kind": "named",
+            "name": "WarningLevel"
+          },
+          "skip": false
+        },
+        {
+          "rustName": "message",
+          "jsName": "message",
+          "type": {
+            "kind": "string",
+            "encoding": "utf8",
+            "direct": false
+          },
+          "skip": false
+        },
+        {
+          "rustName": "start",
+          "jsName": "start",
+          "type": {
+            "kind": "u32"
+          },
+          "skip": false
+        },
+        {
+          "rustName": "end",
+          "jsName": "end",
+          "type": {
+            "kind": "u32"
+          },
+          "skip": false
+        }
+      ],
+      "repr": null,
+      "variants": []
+    }
+  },
+  "enums": {
+    "WarningLevel": {
+      "zctf": "1",
+      "name": "WarningLevel",
+      "kind": "enum",
+      "layoutVersion": 1,
+      "fields": [],
+      "repr": "u8",
+      "variants": [
+        {
+          "name": "Info",
+          "value": 0
+        },
+        {
+          "name": "Warn",
+          "value": 1
+        },
+        {
+          "name": "Error",
+          "value": 2
+        }
+      ]
+    }
+  }
+}
